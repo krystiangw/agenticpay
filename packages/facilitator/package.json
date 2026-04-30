@@ -1,0 +1,25 @@
+{
+  "name": "@agentpay/facilitator",
+  "version": "0.0.1",
+  "description": "Self-hosted x402 facilitator: verify + settle USDC payments on Solana",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx --env-file=../../.env src/index.ts",
+    "start": "node --env-file=../../.env dist/index.js",
+    "fund": "tsx --env-file=../../.env src/fund.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@agentpay/sdk": "workspace:*",
+    "@solana/kit": "^5.5.0",
+    "@solana/web3.js": "^1.95.4",
+    "@x402/core": "^2.11.0",
+    "@x402/svm": "^2.11.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21"
+  }
+}
