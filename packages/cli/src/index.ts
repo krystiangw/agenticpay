@@ -20,7 +20,7 @@ import {
 const program = new Command();
 
 program
-  .name("agentpay")
+  .name("agenticpay")
   .description("Pay-per-tool-call micropayments for AI agents (Solana + USDC + x402)")
   .version("0.0.1");
 

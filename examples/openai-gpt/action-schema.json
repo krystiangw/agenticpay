@@ -1,14 +1,14 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "agentpay tools",
-    "description": "Pay-per-tool-call HTTP API. Each call settles in USDC on Solana via x402. Configure the operator's agentpay mcp-server (default port 4021) and expose a public URL via ngrok or similar before importing into a Custom GPT.",
+    "title": "agenticpay tools",
+    "description": "Pay-per-tool-call HTTP API. Each call settles in USDC on Solana via x402. Configure the operator's agenticpay mcp-server (default port 4021) and expose a public URL via ngrok or similar before importing into a Custom GPT.",
     "version": "0.0.1"
   },
   "servers": [
     {
       "url": "https://your-mcp-server.example.com",
-      "description": "Replace with the public URL of your agentpay mcp-server"
+      "description": "Replace with the public URL of your agenticpay mcp-server"
     }
   ],
   "paths": {
@@ -16,7 +16,7 @@
       "post": {
         "operationId": "reverseString",
         "summary": "Reverse a string (costs 0.001 USDC, paid via x402 on Solana)",
-        "x-agentpay-price": "$0.001 USDC",
+        "x-agenticpay-price": "$0.001 USDC",
         "requestBody": {
           "required": true,
           "content": {
@@ -44,7 +44,7 @@
             }
           },
           "402": {
-            "description": "Payment required. The PAYMENT-REQUIRED header carries x402 v2 payment requirements. The GPT must re-issue the request with an X-PAYMENT header containing a signed payload. See github.com/krystiangw/agentpay."
+            "description": "Payment required. The PAYMENT-REQUIRED header carries x402 v2 payment requirements. The GPT must re-issue the request with an X-PAYMENT header containing a signed payload. See github.com/krystiangw/agenticpay."
           }
         }
       }
@@ -53,7 +53,7 @@
       "post": {
         "operationId": "wordCount",
         "summary": "Count words in a string (costs 0.0005 USDC)",
-        "x-agentpay-price": "$0.0005 USDC",
+        "x-agenticpay-price": "$0.0005 USDC",
         "requestBody": {
           "required": true,
           "content": {

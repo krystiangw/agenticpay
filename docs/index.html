@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>agentpay — get paid by AI agents</title>
+    <title>agenticpay — get paid by AI agents</title>
     <meta
       name="description"
       content="Open-source payment infrastructure for the MCP ecosystem. Declare a price on any tool, agents pay in USDC over x402, settles on Solana in ~1.5 seconds."
     />
-    <meta property="og:title" content="agentpay" />
+    <meta property="og:title" content="agenticpay" />
     <meta
       property="og:description"
       content="Open-source x402 micropayments for AI agents. Self-hosted facilitator, MCP middleware, live LLM agent demo."
@@ -90,7 +90,7 @@
     <main class="max-w-3xl mx-auto px-6 py-20 space-y-20">
       <!-- HERO -->
       <section class="space-y-6">
-        <div class="text-zinc-500 text-sm">agentpay // pre-alpha</div>
+        <div class="text-zinc-500 text-sm">agenticpay // pre-alpha</div>
         <h1 class="text-4xl md:text-5xl font-bold leading-tight">
           Get paid by <span class="accent">AI agents</span>.
         </h1>
@@ -103,14 +103,14 @@
         </p>
         <div class="flex flex-wrap gap-3 pt-4">
           <a
-            href="https://github.com/krystiangw/agentpay"
+            href="https://github.com/krystiangw/agenticpay"
             class="bg-zinc-200 text-black px-5 py-2.5 hover:bg-white transition"
             onclick="posthog.capture('cta_click', {target: 'github'})"
           >
             GitHub →
           </a>
           <a
-            href="https://github.com/krystiangw/agentpay#quickstart-devnet-5-minutes-free"
+            href="https://github.com/krystiangw/agenticpay#quickstart-devnet-5-minutes-free"
             class="border border-zinc-700 px-5 py-2.5 hover:border-zinc-400 transition"
             onclick="posthog.capture('cta_click', {target: 'quickstart'})"
           >
@@ -127,9 +127,9 @@
           autonomously over x402, gets results, answers the user.
         </p>
         <pre class="bg-zinc-950 border border-zinc-800 p-5 text-sm overflow-x-auto whitespace-pre">
-$ pnpm --filter @agentpay/two-agent-demo agent
+$ pnpm --filter @agenticpay/two-agent-demo agent
 
-Task: Reverse 'agentpay rocks' and tell me how many words are in
+Task: Reverse 'agenticpay rocks' and tell me how many words are in
       'The quick brown fox jumps over the lazy dog'.
 
 [turn 1] tool_use: reverse_string  →  paying $0.001 USDC ...
@@ -160,7 +160,7 @@ Task: Reverse 'agentpay rocks' and tell me how many words are in
             <span class="accent">packages/sdk</span> — USDC + wallet primitives
           </li>
           <li>
-            <span class="accent">packages/cli</span> — `agentpay` command
+            <span class="accent">packages/cli</span> — `agenticpay` command
           </li>
           <li>
             <span class="accent">packages/mcp-server</span> — HTTP server with
@@ -202,7 +202,7 @@ FACILITATOR_URL=https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com
           through it.
         </p>
         <p class="text-zinc-400 leading-relaxed">
-          Stablecoin micropayments over HTTP fix it. agentpay packages the
+          Stablecoin micropayments over HTTP fix it. agenticpay packages the
           missing ergonomics for the MCP ecosystem specifically: any tool can
           declare a price, any agent can pay it, the whole pipeline including
           the facilitator that submits the on-chain settlement is open source
@@ -221,7 +221,7 @@ FACILITATOR_URL=https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com
           >Solana</a
         >. Pre-alpha — feedback welcome on
         <a
-          href="https://github.com/krystiangw/agentpay/issues"
+          href="https://github.com/krystiangw/agenticpay/issues"
           class="underline hover:text-zinc-300"
           >GitHub issues</a
         >.

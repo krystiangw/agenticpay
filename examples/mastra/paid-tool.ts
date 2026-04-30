@@ -1,8 +1,8 @@
 /**
- * Mastra example: a Mastra Tool that pays per call via agentpay.
+ * Mastra example: a Mastra Tool that pays per call via agenticpay.
  *
  * Mastra (https://mastra.ai) is a TypeScript-first AI framework with a
- * native Tool concept. agentpay is also TypeScript-first, so the
+ * native Tool concept. agenticpay is also TypeScript-first, so the
  * integration is one wrapper.
  *
  * Install:

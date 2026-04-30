@@ -1,11 +1,11 @@
-# agentpay
+# agenticpay
 
-[![CI](https://github.com/krystiangw/agentpay/actions/workflows/ci.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/krystiangw/agentpay/actions/workflows/codeql.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/codeql.yml)
-[![gitleaks](https://github.com/krystiangw/agentpay/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/gitleaks.yml)
+[![CI](https://github.com/krystiangw/agenticpay/actions/workflows/ci.yml/badge.svg)](https://github.com/krystiangw/agenticpay/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/krystiangw/agenticpay/actions/workflows/codeql.yml/badge.svg)](https://github.com/krystiangw/agenticpay/actions/workflows/codeql.yml)
+[![gitleaks](https://github.com/krystiangw/agenticpay/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/krystiangw/agenticpay/actions/workflows/gitleaks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/krystiangw/agentpay?style=flat&logo=github&color=yellow)](https://github.com/krystiangw/agentpay/stargazers)
-[![npm: @agenticpay/sdk](https://img.shields.io/npm/v/@agenticpay/sdk?label=npm%20%40agentpay%2Fsdk)](https://www.npmjs.com/package/@agenticpay/sdk)
+[![GitHub stars](https://img.shields.io/github/stars/krystiangw/agenticpay?style=flat&logo=github&color=yellow)](https://github.com/krystiangw/agenticpay/stargazers)
+[![npm: @agenticpay/sdk](https://img.shields.io/npm/v/@agenticpay/sdk?label=npm%20%40agenticpay%2Fsdk)](https://www.npmjs.com/package/@agenticpay/sdk)
 [![npm downloads](https://img.shields.io/npm/dm/@agenticpay/sdk?label=downloads)](https://www.npmjs.com/package/@agenticpay/sdk)
 
 **Get paid by AI agents.** Open-source payment infrastructure for the MCP
@@ -36,7 +36,7 @@ Model:        claude-opus-4-7
 Task:         Reverse the string 'agentpay rocks' and tell me how many words
               are in 'The quick brown fox jumps over the lazy dog'.
 
-[turn 1] tool_use: reverse_string({"text":"agentpay rocks"})  →  paying $0.001 USDC ...
+[turn 1] tool_use: reverse_string({"text":"agenticpay rocks"})  →  paying $0.001 USDC ...
   ✓ paid + got result in 1596ms: {"result":"skcor yaptnega"}
 [turn 1] tool_use: word_count({"text":"The quick..."})  →  paying $0.0005 USDC ...
   ✓ paid + got result in 1286ms: {"count":9}
@@ -61,7 +61,7 @@ The current AI agent stack assumes humans hold the credit card. That breaks
 the moment agents act on their own initiative — calling APIs, hiring
 sub-agents, paying for compute. You can't OAuth your way through it.
 
-Stablecoin micropayments over HTTP fix it. agentpay packages the missing
+Stablecoin micropayments over HTTP fix it. agenticpay packages the missing
 ergonomics for the MCP ecosystem specifically: any tool can declare a price,
 any agent can pay it, and the whole pipeline — including the facilitator that
 actually submits the on-chain settlement — is open source and self-hostable.
@@ -79,7 +79,7 @@ actually submits the on-chain settlement — is open source and self-hostable.
                                                               │ verify+settle
                                                               ▼
                                                    ┌──────────────────────┐
-                                                   │ agentpay facilitator │
+                                                   │ agenticpay facilitator │
                                                    │   (also yours, this  │
                                                    │    repo, port 4022)  │
                                                    └──────────┬───────────┘
@@ -99,7 +99,7 @@ self-hosted route easy.
 | Package | What it does |
 |---|---|
 | `packages/sdk` | TypeScript primitives: USDC transfers, wallet management, network config |
-| `packages/cli` | `agentpay` command — wallet, balance, send |
+| `packages/cli` | `agenticpay` command — wallet, balance, send |
 | `packages/mcp-server` | HTTP server with x402 paywall middleware. Each tool has a price. |
 | `packages/facilitator` | **Self-hosted x402 facilitator** — verify + settle USDC payments on Solana. Pays SOL fees on behalf of agents. |
 | `examples/two-agent-demo` | Real Claude Opus agent paying for tool calls |
@@ -108,7 +108,7 @@ self-hosted route easy.
 
 ```bash
 npm install @agenticpay/sdk        # Solana + USDC primitives
-npm install -g @agenticpay/cli     # `agentpay` command
+npm install -g @agenticpay/cli     # `agenticpay` command
 npm install @agenticpay/mcp-server # paywalled HTTP server
 npm install @agenticpay/facilitator # self-hosted x402 facilitator
 ```
@@ -119,14 +119,14 @@ templates (recommended for first run — see Quickstart below).
 ## Use with Claude Code
 
 This repo ships an [Anthropic Skill](https://docs.claude.com/en/docs/claude-code/skills)
-at `.claude/skills/agentpay/SKILL.md`. Copy it into your `~/.claude/skills/`
-to give Claude Code first-class context about agentpay — it'll then walk you
+at `.claude/skills/agenticpay/SKILL.md`. Copy it into your `~/.claude/skills/`
+to give Claude Code first-class context about agenticpay — it'll then walk you
 through monetizing an MCP server, generating tool routes, and verifying
 on-chain settlements without re-reading the README every time.
 
 ```bash
 mkdir -p ~/.claude/skills
-cp -r .claude/skills/agentpay ~/.claude/skills/
+cp -r .claude/skills/agenticpay ~/.claude/skills/
 ```
 
 ## Quickstart (devnet, ~5 minutes, free)
@@ -168,7 +168,7 @@ Drop-in templates for the most common AI agent stacks live under `examples/`:
 | Anthropic SDK (canonical) | `examples/two-agent-demo/src/agent-llm.ts` |
 | LangChain.js | `examples/langchain-js/agent-with-paid-tools.ts` |
 | LangChain Python | `examples/langchain-python/agent_with_paid_tools.py` |
-| Eliza (Solana-native) | `examples/eliza/plugin-agentpay.ts` |
+| Eliza (Solana-native) | `examples/eliza/plugin-agenticpay.ts` |
 | Mastra | `examples/mastra/paid-tool.ts` |
 | Vercel AI SDK | `examples/vercel-ai-sdk/paid-tool.ts` |
 | OpenAI Custom GPT | `examples/openai-gpt/action-schema.json` |
@@ -188,7 +188,7 @@ funding the facilitator with real SOL and pointing at a mainnet-capable RPC
 - [ ] Real-world MCP server template (search, fetch, summarize, extract — instead of toy `reverse_string`)
 - [ ] On-chain escrow for long-running tasks (Anchor program)
 - [ ] Agent reputation registry on-chain
-- [ ] Hosted facilitator service (`agentpay.com`)
+- [ ] Hosted facilitator service (`agenticpay.com`)
 
 ## What's a facilitator?
 

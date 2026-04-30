@@ -1,5 +1,5 @@
 /**
- * Eliza plugin sketch: monetize tool calls inside an Eliza agent via agentpay.
+ * Eliza plugin sketch: monetize tool calls inside an Eliza agent via agenticpay.
  *
  * Eliza (https://elizaos.ai) is a Solana-native multi-agent framework. Each
  * Eliza agent has its own keypair and can already hold SPL tokens — perfect
@@ -7,7 +7,7 @@
  * Action that calls a paywalled endpoint becomes a paid action.
  *
  * Status: SKETCH. Not yet published as an Eliza plugin. Want to ship it?
- * See https://github.com/krystiangw/agentpay/issues
+ * See https://github.com/krystiangw/agenticpay/issues
  *
  * Install in your Eliza agent:
  *   pnpm add @agenticpay/sdk @x402/core @x402/fetch @x402/svm @solana/kit
@@ -22,7 +22,7 @@ const NETWORK = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
 const RPC_URL = "https://api.devnet.solana.com";
 
 /**
- * Construct an agentpay-aware fetch using the Eliza agent's existing keypair.
+ * Construct an agenticpay-aware fetch using the Eliza agent's existing keypair.
  * Eliza stores keypair bytes under runtime.character.settings; adapt the
  * path to whatever your character config uses.
  */

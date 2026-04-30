@@ -3,7 +3,7 @@
  *
  * Loads the sender keypair (the one funded with USDC during the SDK smoke
  * test), builds an x402 client with the SVM exact scheme, and calls the
- * paywalled tools on the agentpay server. The first call gets a 402; the
+ * paywalled tools on the agenticpay server. The first call gets a 402; the
  * fetch wrapper signs a USDC payment, retries, and returns the tool result.
  *
  * Prereqs:
@@ -61,7 +61,7 @@ async function main() {
   const res = await fetchWithPayment(SERVER_URL + "/tools/reverse", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: "agentpay works" }),
+    body: JSON.stringify({ text: "agenticpay works" }),
   });
   const elapsedMs = Date.now() - t0;
 

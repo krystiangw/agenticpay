@@ -1,12 +1,12 @@
 {
   "name": "@agenticpay/cli",
   "version": "0.0.1",
-  "description": "agentpay CLI: wallet management and x402 payments for AI agents",
+  "description": "agenticpay CLI: wallet management and x402 payments for AI agents",
   "license": "MIT",
-  "homepage": "https://github.com/krystiangw/agentpay#readme",
+  "homepage": "https://github.com/krystiangw/agenticpay#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/krystiangw/agentpay.git",
+    "url": "git+https://github.com/krystiangw/agenticpay.git",
     "directory": "packages/cli"
   },
   "keywords": [
@@ -23,7 +23,7 @@
   },
   "type": "module",
   "bin": {
-    "agentpay": "./dist/index.js"
+    "agenticpay": "./dist/index.js"
   },
   "files": [
     "dist"

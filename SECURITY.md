@@ -1,6 +1,6 @@
 # Security Policy
 
-agentpay handles real money flows (USDC settlement on Solana). We take
+agenticpay handles real money flows (USDC settlement on Solana). We take
 security seriously and welcome responsible disclosure.
 
 ## Reporting a Vulnerability

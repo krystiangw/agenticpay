@@ -8,7 +8,7 @@ import {
 } from "@agenticpay/sdk";
 import type { Keypair } from "@solana/web3.js";
 
-export const DEFAULT_WALLET_PATH = join(homedir(), ".agentpay", "wallet.json");
+export const DEFAULT_WALLET_PATH = join(homedir(), ".agenticpay", "wallet.json");
 
 export function resolveWalletPath(override?: string): string {
   return override ?? process.env.AGENTPAY_WALLET ?? DEFAULT_WALLET_PATH;
@@ -33,7 +33,7 @@ export function createWallet(path: string): Keypair {
 export function readWallet(path: string): Keypair {
   if (!existsSync(path)) {
     throw new Error(
-      `No wallet at ${path}. Run \`agentpay wallet new\` first or pass --wallet <path>.`
+      `No wallet at ${path}. Run \`agenticpay wallet new\` first or pass --wallet <path>.`
     );
   }
   return loadKeypair(path);

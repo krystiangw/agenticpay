@@ -1,5 +1,5 @@
 /**
- * agentpay payment server.
+ * agenticpay payment server.
  *
  * HTTP server exposing AI-agent tools behind an x402 USDC paywall on Solana.
  * Each tool is a regular Express route protected by `paymentMiddleware`. When
@@ -81,7 +81,7 @@ app.use(express.json());
 
 app.get("/", (_req, res) => {
   res.json({
-    service: "agentpay",
+    service: "agenticpay",
     version: "0.0.1",
     network: NETWORK,
     facilitator: FACILITATOR_URL,
@@ -108,7 +108,7 @@ app.post("/tools/word-count", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`agentpay server listening on http://localhost:${PORT}`);
+  console.log(`agenticpay server listening on http://localhost:${PORT}`);
   console.log(`network:     ${NETWORK}`);
   console.log(`facilitator: ${FACILITATOR_URL}`);
   console.log(`payTo:       ${PAY_TO}`);

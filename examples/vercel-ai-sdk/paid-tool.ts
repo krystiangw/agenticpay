@@ -1,5 +1,5 @@
 /**
- * Vercel AI SDK example: a `tool()` that pays per call via agentpay.
+ * Vercel AI SDK example: a `tool()` that pays per call via agenticpay.
  *
  * Drop this into a Next.js Route Handler, edge function, or worker that
  * uses the Vercel AI SDK's `generateText` / `streamText` with tool calls.
@@ -43,7 +43,7 @@ export const reverseStringTool = tool({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
-    if (!res.ok) throw new Error(`agentpay tool failed: ${res.status}`);
+    if (!res.ok) throw new Error(`agenticpay tool failed: ${res.status}`);
     return (await res.json()) as { result: string };
   },
 });

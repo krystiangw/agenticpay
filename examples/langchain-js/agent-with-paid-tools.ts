@@ -1,5 +1,5 @@
 /**
- * LangChain.js example: a LangChain agent that pays for tool calls via agentpay.
+ * LangChain.js example: a LangChain agent that pays for tool calls via agenticpay.
  *
  * Wraps an x402-paywalled HTTP endpoint as a LangChain Tool. The agent
  * decides when to call it; each invocation triggers the standard 402 →

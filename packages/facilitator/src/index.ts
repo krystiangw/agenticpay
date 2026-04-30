@@ -1,5 +1,5 @@
 /**
- * agentpay self-hosted x402 facilitator.
+ * agenticpay self-hosted x402 facilitator.
  *
  * Express server exposing the standard x402 facilitator endpoints:
  *   GET  /supported  → list of (scheme, network) pairs we can verify and settle
@@ -179,7 +179,7 @@ async function main() {
   app.get("/", (_req, res) => {
     const supported = facilitator.getSupported();
     res.json({
-      service: "agentpay-facilitator",
+      service: "agenticpay-facilitator",
       version: "0.0.1",
       feePayer: signer.address,
       networks: supported.kinds.map((k) => k.network),
@@ -188,7 +188,7 @@ async function main() {
   });
 
   app.listen(PORT, () => {
-    console.log(`agentpay facilitator listening on http://localhost:${PORT}`);
+    console.log(`agenticpay facilitator listening on http://localhost:${PORT}`);
     console.log(`endpoints: GET / | GET /supported | POST /verify | POST /settle`);
     console.log("---");
     console.log(

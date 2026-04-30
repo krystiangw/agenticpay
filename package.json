@@ -1,5 +1,5 @@
 {
-  "name": "agentpay-monorepo",
+  "name": "agenticpay-monorepo",
   "private": true,
   "version": "0.0.0",
   "description": "MCP-native pay-per-tool-call micropayments for AI agents (Solana + USDC + x402)",

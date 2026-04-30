@@ -1,12 +1,12 @@
 {
   "name": "@agenticpay/sdk",
   "version": "0.0.1",
-  "description": "TypeScript SDK for agentpay: Solana + USDC primitives for AI agent micropayments",
+  "description": "TypeScript SDK for agenticpay: Solana + USDC primitives for AI agent micropayments",
   "license": "MIT",
-  "homepage": "https://github.com/krystiangw/agentpay#readme",
+  "homepage": "https://github.com/krystiangw/agenticpay#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/krystiangw/agentpay.git",
+    "url": "git+https://github.com/krystiangw/agenticpay.git",
     "directory": "packages/sdk"
   },
   "keywords": [
