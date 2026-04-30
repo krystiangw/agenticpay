@@ -6,10 +6,12 @@
   "type": "module",
   "scripts": {
     "client": "tsx src/agent-client.ts",
+    "agent": "tsx --env-file=../../.env src/agent-llm.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@agentpay/sdk": "workspace:*",
+    "@anthropic-ai/sdk": "^0.91.1",
     "@solana/kit": "^5.5.0",
     "@x402/core": "^2.11.0",
     "@x402/fetch": "^2.11.0",
