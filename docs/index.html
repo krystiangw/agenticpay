@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>agentpay — get paid by AI agents</title>
+    <meta
+      name="description"
+      content="Open-source payment infrastructure for the MCP ecosystem. Declare a price on any tool, agents pay in USDC over x402, settles on Solana in ~1.5 seconds."
+    />
+    <meta property="og:title" content="agentpay" />
+    <meta
+      property="og:description"
+      content="Open-source x402 micropayments for AI agents. Self-hosted facilitator, MCP middleware, live LLM agent demo."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="data:," />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+      }
+      .accent {
+        color: #a3e635;
+      }
+      pre {
+        font-family: inherit;
+      }
+    </style>
+  </head>
+  <body class="bg-black text-zinc-200 min-h-screen">
+    <main class="max-w-3xl mx-auto px-6 py-20 space-y-20">
+      <!-- HERO -->
+      <section class="space-y-6">
+        <div class="text-zinc-500 text-sm">agentpay // pre-alpha</div>
+        <h1 class="text-4xl md:text-5xl font-bold leading-tight">
+          Get paid by <span class="accent">AI agents</span>.
+        </h1>
+        <p class="text-zinc-400 text-lg leading-relaxed">
+          Open-source payment infrastructure for the MCP ecosystem. Declare a
+          price on any tool, agents pay in USDC over
+          <a href="https://x402.org" class="underline decoration-zinc-700 hover:decoration-zinc-300">x402</a>,
+          settles on Solana in ~1.5 seconds. No Stripe. No accounts. No API
+          keys.
+        </p>
+        <div class="flex flex-wrap gap-3 pt-4">
+          <a
+            href="https://github.com/krystiangw/agentpay"
+            class="bg-zinc-200 text-black px-5 py-2.5 hover:bg-white transition"
+          >
+            GitHub →
+          </a>
+          <a
+            href="https://github.com/krystiangw/agentpay#quickstart-devnet-5-minutes-free"
+            class="border border-zinc-700 px-5 py-2.5 hover:border-zinc-400 transition"
+          >
+            5-min quickstart
+          </a>
+        </div>
+      </section>
+
+      <!-- LIVE DEMO -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold">Live demo</h2>
+        <p class="text-zinc-400">
+          Real Claude Opus agent decides which paid tools to use, pays
+          autonomously over x402, gets results, answers the user.
+        </p>
+        <pre class="bg-zinc-950 border border-zinc-800 p-5 text-sm overflow-x-auto whitespace-pre">
+$ pnpm --filter @agentpay/two-agent-demo agent
+
+Task: Reverse 'agentpay rocks' and tell me how many words are in
+      'The quick brown fox jumps over the lazy dog'.
+
+[turn 1] tool_use: reverse_string  →  paying $0.001 USDC ...
+  ✓ paid + got result in 1596ms: {"result":"skcor yaptnega"}
+[turn 1] tool_use: word_count      →  paying $0.0005 USDC ...
+  ✓ paid + got result in 1286ms: {"count":9}
+
+=== payments summary ===
+  reverse_string   $0.0010 USDC   1596ms
+  word_count       $0.0005 USDC   1286ms
+  <span class="accent">TOTAL            $0.0015 USDC   2 calls</span>
+        </pre>
+        <p class="text-sm text-zinc-500">
+          On-chain proof:
+          <a
+            class="underline hover:text-zinc-300"
+            href="https://explorer.solana.com/tx/EsqzTG8id5CF5yxXmSSictkJnqn1uVC514joHqVBpdfSy4MkzvGzGGdb7Fybkn5ruSGyCQ87jyjmHuSGpU2Bnku?cluster=devnet"
+            >EsqzTG8id…Bnku (devnet)</a
+          >
+        </p>
+      </section>
+
+      <!-- WHAT'S IN THE BOX -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold">What's in the box</h2>
+        <ul class="space-y-3 text-zinc-300">
+          <li>
+            <span class="accent">packages/sdk</span> — USDC + wallet primitives
+          </li>
+          <li>
+            <span class="accent">packages/cli</span> — `agentpay` command
+          </li>
+          <li>
+            <span class="accent">packages/mcp-server</span> — HTTP server with
+            x402 paywall middleware. Each tool has a price.
+          </li>
+          <li>
+            <span class="accent">packages/facilitator</span> — first
+            open-source x402 facilitator. Verify + settle on Solana, pays SOL
+            fees on behalf of the agent.
+          </li>
+          <li>
+            <span class="accent">examples/two-agent-demo</span> — Claude Opus
+            agent paying for tool calls
+          </li>
+        </ul>
+      </section>
+
+      <!-- HOSTED FACILITATOR -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold">Or just point at our hosted one</h2>
+        <p class="text-zinc-400">
+          Skip self-hosting for testing. We run a free devnet facilitator:
+        </p>
+        <pre class="bg-zinc-950 border border-zinc-800 p-5 text-sm overflow-x-auto whitespace-pre">
+FACILITATOR_URL=https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com
+        </pre>
+        <p class="text-xs text-zinc-500">
+          Devnet only. Mainnet support and hosted commercial tier coming.
+        </p>
+      </section>
+
+      <!-- WHY -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold">Why this exists</h2>
+        <p class="text-zinc-400 leading-relaxed">
+          The current AI agent stack assumes humans hold the credit card. That
+          breaks the moment agents act on their own initiative — calling APIs,
+          hiring sub-agents, paying for compute. You can't OAuth your way
+          through it.
+        </p>
+        <p class="text-zinc-400 leading-relaxed">
+          Stablecoin micropayments over HTTP fix it. agentpay packages the
+          missing ergonomics for the MCP ecosystem specifically: any tool can
+          declare a price, any agent can pay it, the whole pipeline including
+          the facilitator that submits the on-chain settlement is open source
+          and self-hostable.
+        </p>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="border-t border-zinc-800 pt-8 text-sm text-zinc-500">
+        MIT licensed. Built on
+        <a href="https://x402.org" class="underline hover:text-zinc-300"
+          >x402</a
+        >
+        +
+        <a href="https://solana.com" class="underline hover:text-zinc-300"
+          >Solana</a
+        >. Pre-alpha — feedback welcome on
+        <a
+          href="https://github.com/krystiangw/agentpay/issues"
+          class="underline hover:text-zinc-300"
+          >GitHub issues</a
+        >.
+      </footer>
+    </main>
+  </body>
+</html>
