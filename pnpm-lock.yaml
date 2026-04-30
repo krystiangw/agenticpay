@@ -20,7 +20,7 @@ importers:
 
   examples/two-agent-demo:
     dependencies:
-      '@agentpay/sdk':
+      '@agenticpay/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       '@anthropic-ai/sdk':
@@ -41,7 +41,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@agentpay/sdk':
+      '@agenticpay/sdk':
         specifier: workspace:*
         version: link:../sdk
       '@solana/web3.js':
@@ -53,7 +53,7 @@ importers:
 
   packages/facilitator:
     dependencies:
-      '@agentpay/sdk':
+      '@agenticpay/sdk':
         specifier: workspace:*
         version: link:../sdk
       '@solana/kit':
@@ -81,7 +81,7 @@ importers:
 
   packages/mcp-server:
     dependencies:
-      '@agentpay/sdk':
+      '@agenticpay/sdk':
         specifier: workspace:*
         version: link:../sdk
       '@x402/core':

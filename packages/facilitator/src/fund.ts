@@ -3,7 +3,7 @@
  * facilitator fee payer on devnet. Useful when the public devnet faucet is
  * rate-limited but you already have funded wallets nearby.
  *
- * Run: `pnpm --filter @agentpay/facilitator fund [amountSol]`
+ * Run: `pnpm --filter @agenticpay/facilitator fund [amountSol]`
  */
 import { resolve } from "node:path";
 import {
@@ -15,7 +15,7 @@ import {
   clusterApiUrl,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
-import { loadKeypair } from "@agentpay/sdk";
+import { loadKeypair } from "@agenticpay/sdk";
 
 const SENDER_PATH = resolve(
   process.cwd(),

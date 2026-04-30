@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
 import type { KeyPairSigner } from "@solana/kit";
-import { generateKeypair, saveKeypair } from "@agentpay/sdk";
+import { generateKeypair, saveKeypair } from "@agenticpay/sdk";
 
 /**
  * Load a fee-payer keypair. Resolution order:

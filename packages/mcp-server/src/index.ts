@@ -7,7 +7,7 @@
  * The client signs a USDC transfer payload, retries with the X-PAYMENT header,
  * and the facilitator settles on-chain before the route runs.
  *
- * Run: `pnpm --filter @agentpay/mcp-server dev`
+ * Run: `pnpm --filter @agenticpay/mcp-server dev`
  */
 import express from "express";
 import { paymentMiddleware } from "@x402/express";

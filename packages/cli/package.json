@@ -1,5 +1,5 @@
 {
-  "name": "@agentpay/cli",
+  "name": "@agenticpay/cli",
   "version": "0.0.1",
   "description": "agentpay CLI: wallet management and x402 payments for AI agents",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agentpay/sdk": "workspace:*",
+    "@agenticpay/sdk": "workspace:*",
     "@solana/web3.js": "^1.95.4",
     "commander": "^12.1.0"
   }

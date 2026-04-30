@@ -10,7 +10,7 @@
  * keypair (./wallets/facilitator.json by default) is the fee_payer for every
  * tx, so payers don't need any SOL — they only need USDC.
  *
- * Run: `pnpm --filter @agentpay/facilitator dev`
+ * Run: `pnpm --filter @agenticpay/facilitator dev`
  */
 import express from "express";
 import { resolve } from "node:path";

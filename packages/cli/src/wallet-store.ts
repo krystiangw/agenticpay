@@ -5,7 +5,7 @@ import {
   generateKeypair,
   loadKeypair,
   saveKeypair,
-} from "@agentpay/sdk";
+} from "@agenticpay/sdk";
 import type { Keypair } from "@solana/web3.js";
 
 export const DEFAULT_WALLET_PATH = join(homedir(), ".agentpay", "wallet.json");

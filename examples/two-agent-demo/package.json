@@ -1,5 +1,5 @@
 {
-  "name": "@agentpay/two-agent-demo",
+  "name": "@agenticpay/two-agent-demo",
   "version": "0.0.1",
   "private": true,
   "description": "Two-agent demo: agent A pays agent B in USDC for tool calls (x402 + Solana)",
@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agentpay/sdk": "workspace:*",
+    "@agenticpay/sdk": "workspace:*",
     "@anthropic-ai/sdk": "^0.91.1",
     "@solana/kit": "^5.5.0",
     "@x402/core": "^2.11.0",

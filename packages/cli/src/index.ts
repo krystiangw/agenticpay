@@ -9,7 +9,7 @@ import {
   transferUsdc,
   usdc,
   type Cluster,
-} from "@agentpay/sdk";
+} from "@agenticpay/sdk";
 import {
   createWallet,
   readWallet,

@@ -1,5 +1,5 @@
 {
-  "name": "@agentpay/mcp-server",
+  "name": "@agenticpay/mcp-server",
   "version": "0.0.1",
   "description": "Pay-per-tool-call HTTP server with x402 USDC paywall on Solana",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agentpay/sdk": "workspace:*",
+    "@agenticpay/sdk": "workspace:*",
     "@x402/core": "^2.11.0",
     "@x402/express": "^2.11.0",
     "@x402/svm": "^2.11.0",

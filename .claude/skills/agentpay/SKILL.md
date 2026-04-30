@@ -25,10 +25,10 @@ The packages in the monorepo:
 
 | Package | Role |
 |---|---|
-| `@agentpay/sdk` | USDC + wallet primitives, network config |
-| `@agentpay/cli` | `agentpay` CLI: wallet, balance, send |
-| `@agentpay/mcp-server` | Express server with x402 paywall middleware |
-| `@agentpay/facilitator` | Self-hostable x402 facilitator (verify + settle) |
+| `@agenticpay/sdk` | USDC + wallet primitives, network config |
+| `@agenticpay/cli` | `agentpay` CLI: wallet, balance, send |
+| `@agenticpay/mcp-server` | Express server with x402 paywall middleware |
+| `@agenticpay/facilitator` | Self-hostable x402 facilitator (verify + settle) |
 
 ## Critical invariants (the day-1 footgun)
 
@@ -63,7 +63,7 @@ For free experiments use devnet. The hosted facilitator at
    ```bash
    PAY_TO=<recipient pubkey> \
    FACILITATOR_URL=https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com \
-     pnpm --filter @agentpay/mcp-server dev
+     pnpm --filter @agenticpay/mcp-server dev
    ```
 
    Each tool has a price configured in `packages/mcp-server/src/index.ts`.
@@ -111,9 +111,9 @@ For a full LLM-driven example (Claude Opus deciding when to pay), see
 ### "Help me self-host the facilitator"
 
 ```bash
-pnpm --filter @agentpay/facilitator dev
+pnpm --filter @agenticpay/facilitator dev
 # Note the printed feePayer address — it needs ~0.05 SOL devnet to cover fees.
-pnpm --filter @agentpay/facilitator fund   # transfers SOL from sender wallet
+pnpm --filter @agenticpay/facilitator fund   # transfers SOL from sender wallet
 ```
 
 For production deployment (e.g. Heroku):

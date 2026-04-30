@@ -11,7 +11,7 @@
  * (e.g. Helius free tier), or fund the sender pubkey via
  * https://faucet.solana.com manually.
  *
- * Run: `pnpm --filter @agentpay/sdk smoke`
+ * Run: `pnpm --filter @agenticpay/sdk smoke`
  */
 import { existsSync, mkdirSync } from "node:fs";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";

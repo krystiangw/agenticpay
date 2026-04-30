@@ -12,6 +12,7 @@ build/
 *.key
 keypair.json
 wallets/
+.npmrc
 
 # Editor / OS
 .DS_Store

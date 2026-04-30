@@ -1,5 +1,5 @@
 {
-  "name": "@agentpay/sdk",
+  "name": "@agenticpay/sdk",
   "version": "0.0.1",
   "description": "TypeScript SDK for agentpay: Solana + USDC primitives for AI agent micropayments",
   "license": "MIT",

@@ -13,7 +13,7 @@
  *  - packages/sdk/wallets/sender.json funded with devnet USDC
  *  - ANTHROPIC_API_KEY in .env (loaded via tsx --env-file)
  *
- * Run: `pnpm --filter @agentpay/two-agent-demo agent`
+ * Run: `pnpm --filter @agenticpay/two-agent-demo agent`
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -78,7 +78,7 @@ interface PaymentLog {
 async function main() {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error(
-      "ANTHROPIC_API_KEY missing. Put it in .env at repo root and run via `pnpm --filter @agentpay/two-agent-demo agent`."
+      "ANTHROPIC_API_KEY missing. Put it in .env at repo root and run via `pnpm --filter @agenticpay/two-agent-demo agent`."
     );
   }
 

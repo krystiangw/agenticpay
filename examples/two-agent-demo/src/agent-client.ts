@@ -8,10 +8,10 @@
  *
  * Prereqs:
  *  - The mcp-server is running locally on http://localhost:4021
- *    (`pnpm --filter @agentpay/mcp-server dev` with PAY_TO=<recipient pubkey>)
+ *    (`pnpm --filter @agenticpay/mcp-server dev` with PAY_TO=<recipient pubkey>)
  *  - packages/sdk/wallets/sender.json exists and is funded with USDC
  *
- * Run: `pnpm --filter @agentpay/two-agent-demo client`
+ * Run: `pnpm --filter @agenticpay/two-agent-demo client`
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";

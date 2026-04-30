@@ -5,8 +5,8 @@
 [![gitleaks](https://github.com/krystiangw/agentpay/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/gitleaks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/krystiangw/agentpay?style=flat&logo=github&color=yellow)](https://github.com/krystiangw/agentpay/stargazers)
-[![npm: @agentpay/sdk](https://img.shields.io/npm/v/@agentpay/sdk?label=npm%20%40agentpay%2Fsdk)](https://www.npmjs.com/package/@agentpay/sdk)
-[![npm downloads](https://img.shields.io/npm/dm/@agentpay/sdk?label=downloads)](https://www.npmjs.com/package/@agentpay/sdk)
+[![npm: @agenticpay/sdk](https://img.shields.io/npm/v/@agenticpay/sdk?label=npm%20%40agentpay%2Fsdk)](https://www.npmjs.com/package/@agenticpay/sdk)
+[![npm downloads](https://img.shields.io/npm/dm/@agenticpay/sdk?label=downloads)](https://www.npmjs.com/package/@agenticpay/sdk)
 
 **Get paid by AI agents.** Open-source payment infrastructure for the MCP
 ecosystem — declare a price on any tool, agents pay in USDC over [x402](https://x402.org),
@@ -27,7 +27,7 @@ A real Claude Opus agent receives a task, decides which paid tools to use,
 pays autonomously via x402 micropayments on Solana, and answers the user.
 
 ```
-$ pnpm --filter @agentpay/two-agent-demo agent
+$ pnpm --filter @agenticpay/two-agent-demo agent
 
 Agent wallet: 3rHoEumCpH8EGrr6Lq2vBKeyec6h3yPRGj2nGG2FzEfX
 Server:       http://localhost:4021
@@ -107,10 +107,10 @@ self-hosted route easy.
 ## Install
 
 ```bash
-npm install @agentpay/sdk        # Solana + USDC primitives
-npm install -g @agentpay/cli     # `agentpay` command
-npm install @agentpay/mcp-server # paywalled HTTP server
-npm install @agentpay/facilitator # self-hosted x402 facilitator
+npm install @agenticpay/sdk        # Solana + USDC primitives
+npm install -g @agenticpay/cli     # `agentpay` command
+npm install @agenticpay/mcp-server # paywalled HTTP server
+npm install @agenticpay/facilitator # self-hosted x402 facilitator
 ```
 
 Or clone the monorepo to get the live two-agent demo and edit-friendly
@@ -146,17 +146,17 @@ node packages/cli/dist/index.js wallet show
 export FACILITATOR_URL=https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com
 
 # 3. (option B — fully self-hosted) Start your own facilitator (terminal 1)
-pnpm --filter @agentpay/facilitator dev
+pnpm --filter @agenticpay/facilitator dev
 # Note the printed feePayer address. It needs ~0.05 SOL devnet to cover fees.
 # Either airdrop or use the helper:
-pnpm --filter @agentpay/facilitator fund
+pnpm --filter @agenticpay/facilitator fund
 export FACILITATOR_URL=http://localhost:4022
 
 # 4. Start the paywalled mcp-server (terminal 2)
-PAY_TO=<recipient pubkey> pnpm --filter @agentpay/mcp-server dev
+PAY_TO=<recipient pubkey> pnpm --filter @agenticpay/mcp-server dev
 
 # 5. Run the live LLM agent demo (terminal 3, needs ANTHROPIC_API_KEY in .env)
-pnpm --filter @agentpay/two-agent-demo agent
+pnpm --filter @agenticpay/two-agent-demo agent
 ```
 
 ## Status
