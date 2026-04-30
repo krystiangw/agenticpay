@@ -24,6 +24,7 @@ import type { Network } from "@x402/core/types";
 import { ExactSvmScheme } from "@x402/svm/exact/facilitator";
 import { toFacilitatorSvmSigner } from "@x402/svm";
 import { loadOrCreateFacilitatorSigner } from "./keypair.js";
+import { analytics } from "./analytics.js";
 
 // Heroku/Fly.io assign the listen port via PORT; FACILITATOR_PORT is the
 // local-development override that takes precedence when set.
@@ -42,9 +43,16 @@ const SOLANA_MAINNET_CAIP2: Network =
   "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
 async function main() {
+  analytics.init(process.env.POSTHOG_API_KEY, process.env.POSTHOG_HOST);
+
   const signer = await loadOrCreateFacilitatorSigner(KEYPAIR_PATH);
   console.log(`Facilitator signer: ${signer.address}`);
   console.log(`Keypair persisted:  ${KEYPAIR_PATH}`);
+
+  analytics.capture("facilitator_started", undefined, {
+    feePayer: signer.address,
+    networks: [SOLANA_DEVNET_CAIP2, SOLANA_MAINNET_CAIP2],
+  });
 
   // RPC client per network so the facilitator can simulate/submit on each.
   const rpcByNetwork: Record<string, ReturnType<typeof createSolanaRpc>> = {
@@ -80,9 +88,16 @@ async function main() {
   });
 
   app.post("/verify", async (req, res) => {
+    const { paymentPayload, paymentRequirements } = req.body ?? {};
+    const network = paymentRequirements?.network as string | undefined;
+    const amount = paymentRequirements?.amount as string | undefined;
+
     try {
-      const { paymentPayload, paymentRequirements } = req.body ?? {};
       if (!paymentPayload || !paymentRequirements) {
+        analytics.capture("verify_request", undefined, {
+          ok: false,
+          reason: "missing_parameters",
+        });
         return res.status(400).json({
           isValid: false,
           invalidReason: "missing_parameters",
@@ -90,10 +105,22 @@ async function main() {
         });
       }
       const result = await facilitator.verify(paymentPayload, paymentRequirements);
+      analytics.capture("verify_request", result.payer, {
+        ok: result.isValid,
+        reason: result.invalidReason,
+        network,
+        amount,
+      });
       res.json(result);
     } catch (err) {
       const message = (err as Error).message;
       console.error("[verify exception]", message);
+      analytics.capture("verify_request", undefined, {
+        ok: false,
+        reason: "unexpected_error",
+        error: message,
+        network,
+      });
       res.status(500).json({
         isValid: false,
         invalidReason: "unexpected_error",
@@ -103,9 +130,16 @@ async function main() {
   });
 
   app.post("/settle", async (req, res) => {
+    const { paymentPayload, paymentRequirements } = req.body ?? {};
+    const network = paymentRequirements?.network as string | undefined;
+    const amount = paymentRequirements?.amount as string | undefined;
+
     try {
-      const { paymentPayload, paymentRequirements } = req.body ?? {};
       if (!paymentPayload || !paymentRequirements) {
+        analytics.capture("settle_request", undefined, {
+          ok: false,
+          reason: "missing_parameters",
+        });
         return res.status(400).json({
           success: false,
           errorReason: "missing_parameters",
@@ -115,10 +149,23 @@ async function main() {
         });
       }
       const result = await facilitator.settle(paymentPayload, paymentRequirements);
+      analytics.capture("settle_request", result.payer, {
+        ok: result.success,
+        reason: result.errorReason,
+        network,
+        amount,
+        tx: result.transaction,
+      });
       res.json(result);
     } catch (err) {
       const message = (err as Error).message;
       console.error("[settle exception]", message);
+      analytics.capture("settle_request", undefined, {
+        ok: false,
+        reason: "unexpected_error",
+        error: message,
+        network,
+      });
       res.status(500).json({
         success: false,
         errorReason: "unexpected_error",

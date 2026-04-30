@@ -4,6 +4,9 @@
 [![CodeQL](https://github.com/krystiangw/agentpay/actions/workflows/codeql.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/codeql.yml)
 [![gitleaks](https://github.com/krystiangw/agentpay/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/gitleaks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/krystiangw/agentpay?style=flat&logo=github&color=yellow)](https://github.com/krystiangw/agentpay/stargazers)
+[![npm: @agentpay/sdk](https://img.shields.io/npm/v/@agentpay/sdk?label=npm%20%40agentpay%2Fsdk)](https://www.npmjs.com/package/@agentpay/sdk)
+[![npm downloads](https://img.shields.io/npm/dm/@agentpay/sdk?label=downloads)](https://www.npmjs.com/package/@agentpay/sdk)
 
 **Get paid by AI agents.** Open-source payment infrastructure for the MCP
 ecosystem — declare a price on any tool, agents pay in USDC over [x402](https://x402.org),
