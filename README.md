@@ -101,6 +101,31 @@ self-hosted route easy.
 | `packages/facilitator` | **Self-hosted x402 facilitator** — verify + settle USDC payments on Solana. Pays SOL fees on behalf of agents. |
 | `examples/two-agent-demo` | Real Claude Opus agent paying for tool calls |
 
+## Install
+
+```bash
+npm install @agentpay/sdk        # Solana + USDC primitives
+npm install -g @agentpay/cli     # `agentpay` command
+npm install @agentpay/mcp-server # paywalled HTTP server
+npm install @agentpay/facilitator # self-hosted x402 facilitator
+```
+
+Or clone the monorepo to get the live two-agent demo and edit-friendly
+templates (recommended for first run — see Quickstart below).
+
+## Use with Claude Code
+
+This repo ships an [Anthropic Skill](https://docs.claude.com/en/docs/claude-code/skills)
+at `.claude/skills/agentpay/SKILL.md`. Copy it into your `~/.claude/skills/`
+to give Claude Code first-class context about agentpay — it'll then walk you
+through monetizing an MCP server, generating tool routes, and verifying
+on-chain settlements without re-reading the README every time.
+
+```bash
+mkdir -p ~/.claude/skills
+cp -r .claude/skills/agentpay ~/.claude/skills/
+```
+
 ## Quickstart (devnet, ~5 minutes, free)
 
 ```bash

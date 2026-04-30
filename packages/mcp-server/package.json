@@ -2,6 +2,29 @@
   "name": "@agentpay/mcp-server",
   "version": "0.0.1",
   "description": "Pay-per-tool-call HTTP server with x402 USDC paywall on Solana",
+  "license": "MIT",
+  "homepage": "https://github.com/krystiangw/agentpay#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krystiangw/agentpay.git",
+    "directory": "packages/mcp-server"
+  },
+  "keywords": [
+    "x402",
+    "solana",
+    "usdc",
+    "mcp",
+    "ai-agents",
+    "paywall",
+    "express",
+    "agentic-payments"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
