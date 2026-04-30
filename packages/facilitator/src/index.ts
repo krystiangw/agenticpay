@@ -25,7 +25,9 @@ import { ExactSvmScheme } from "@x402/svm/exact/facilitator";
 import { toFacilitatorSvmSigner } from "@x402/svm";
 import { loadOrCreateFacilitatorSigner } from "./keypair.js";
 
-const PORT = Number(process.env.FACILITATOR_PORT ?? 4022);
+// Heroku/Fly.io assign the listen port via PORT; FACILITATOR_PORT is the
+// local-development override that takes precedence when set.
+const PORT = Number(process.env.FACILITATOR_PORT ?? process.env.PORT ?? 4022);
 const KEYPAIR_PATH = resolve(
   process.env.FACILITATOR_KEYPAIR ?? "./wallets/facilitator.json"
 );

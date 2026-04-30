@@ -7,7 +7,9 @@
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
     "typecheck": "pnpm -r typecheck",
-    "clean": "pnpm -r exec rm -rf dist .turbo node_modules && rm -rf node_modules"
+    "clean": "pnpm -r exec rm -rf dist .turbo node_modules && rm -rf node_modules",
+    "heroku-postbuild": "pnpm -r build",
+    "start": "node packages/facilitator/dist/index.js"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {

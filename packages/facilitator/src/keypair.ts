@@ -5,14 +5,29 @@ import type { KeyPairSigner } from "@solana/kit";
 import { generateKeypair, saveKeypair } from "@agentpay/sdk";
 
 /**
- * Load a fee-payer keypair from a JSON file (the standard solana-keygen format:
- * a 64-byte array). If the file does not exist, generate a new one using
- * `@solana/web3.js`'s extractable Keypair (so we can persist the bytes), save
- * it, and then return a `@solana/kit` KeyPairSigner usable by @x402/svm.
+ * Load a fee-payer keypair. Resolution order:
+ *  1. FACILITATOR_KEYPAIR_BYTES env var (JSON-encoded 64-byte array) — for
+ *     ephemeral hosts like Heroku/Fly.io where the filesystem is read-only or
+ *     wiped on every deploy.
+ *  2. JSON file at `path` — for local development.
+ *  3. Generate a fresh keypair and persist it at `path` (only if the directory
+ *     is writable; Heroku slug fs is read-only at runtime, so this branch is
+ *     skipped there and the caller should set FACILITATOR_KEYPAIR_BYTES first).
  */
 export async function loadOrCreateFacilitatorSigner(
   path: string
 ): Promise<KeyPairSigner> {
+  const fromEnv = process.env.FACILITATOR_KEYPAIR_BYTES;
+  if (fromEnv) {
+    const arr = JSON.parse(fromEnv) as number[];
+    if (arr.length !== 64) {
+      throw new Error(
+        `FACILITATOR_KEYPAIR_BYTES must be a 64-byte array, got ${arr.length}`
+      );
+    }
+    return createKeyPairSignerFromBytes(Uint8Array.from(arr));
+  }
+
   let bytes: Uint8Array;
 
   if (existsSync(path)) {
