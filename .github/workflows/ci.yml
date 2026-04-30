@@ -24,8 +24,10 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm -r typecheck
-
+      # Build first so workspace packages emit their dist/ (cli depends on
+      # @agentpay/sdk via workspace:*; typecheck cannot resolve it without dist).
       - name: Build
         run: pnpm -r build
+
+      - name: Typecheck
+        run: pnpm -r typecheck
