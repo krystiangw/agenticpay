@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Warsaw"
+    open-pull-requests-limit: 5
+    groups:
+      x402:
+        patterns:
+          - "@x402/*"
+      solana:
+        patterns:
+          - "@solana/*"
+          - "@solana-program/*"
+      anthropic:
+        patterns:
+          - "@anthropic-ai/*"
+      typescript-tooling:
+        patterns:
+          - "typescript"
+          - "tsx"
+          - "@types/*"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Warsaw"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"

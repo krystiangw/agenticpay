@@ -1,5 +1,10 @@
 # agentpay
 
+[![CI](https://github.com/krystiangw/agentpay/actions/workflows/ci.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/krystiangw/agentpay/actions/workflows/codeql.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/codeql.yml)
+[![gitleaks](https://github.com/krystiangw/agentpay/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/krystiangw/agentpay/actions/workflows/gitleaks.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Get paid by AI agents.** Open-source payment infrastructure for the MCP
 ecosystem — declare a price on any tool, agents pay in USDC over [x402](https://x402.org),
 settles on Solana in ~1.5 seconds.
