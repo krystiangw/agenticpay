@@ -1,0 +1,28 @@
+{
+  "name": "@agentpay/sdk",
+  "version": "0.0.1",
+  "description": "TypeScript SDK for agentpay: Solana + USDC primitives for AI agent micropayments",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "smoke": "tsx src/smoke.ts"
+  },
+  "dependencies": {
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.95.4",
+    "bs58": "^6.0.0"
+  }
+}

@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+.turbo/
+.cache/
+*.tsbuildinfo
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.key
+keypair.json
+wallets/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
