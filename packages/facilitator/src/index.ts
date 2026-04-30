@@ -13,6 +13,7 @@
  * Run: `pnpm --filter @agenticpay/facilitator dev`
  */
 import express from "express";
+import rateLimit from "express-rate-limit";
 import { resolve } from "node:path";
 import {
   createSolanaRpc,
@@ -25,6 +26,19 @@ import { ExactSvmScheme } from "@x402/svm/exact/facilitator";
 import { toFacilitatorSvmSigner } from "@x402/svm";
 import { loadOrCreateFacilitatorSigner } from "./keypair.js";
 import { analytics } from "./analytics.js";
+
+// Lower bound on payment amounts we'll accept. 100 base units of USDC is
+// $0.0001 — anything less is almost certainly spam, since the SOL fee paid
+// on the payer's behalf already exceeds the value of the transfer.
+const MIN_AMOUNT_BASE_UNITS = 100n;
+
+// Public-facing error messages. We log the real exception internally but
+// only echo a generic reason to the client, so we don't leak library-internal
+// strings (file paths, lib version, etc.) that aid reconnaissance.
+const GENERIC_VERIFY_ERROR =
+  "Verification failed. See server logs for details.";
+const GENERIC_SETTLE_ERROR =
+  "Settlement failed. See server logs for details.";
 
 // Heroku/Fly.io assign the listen port via PORT; FACILITATOR_PORT is the
 // local-development override that takes precedence when set.
@@ -81,13 +95,56 @@ async function main() {
     });
 
   const app = express();
+  // Trust the Heroku/Fly.io reverse proxy so rate limiting keys on the real
+  // client IP, not the load balancer's.
+  app.set("trust proxy", 1);
   app.use(express.json({ limit: "256kb" }));
 
-  app.get("/supported", (_req, res) => {
+  // Rate limit: 60 req/min per IP for the public read endpoint.
+  const readLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 60,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: { error: "rate_limited", message: "Too many requests" },
+  });
+
+  // Stricter limit on the verify/settle endpoints: 30 req/min per IP. Each
+  // settle costs the fee_payer SOL on-chain, so a tighter ceiling protects
+  // our funds even if the network/asset checks below were bypassed.
+  const writeLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 30,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: {
+      success: false,
+      errorReason: "rate_limited",
+      errorMessage: "Too many requests",
+    },
+  });
+
+  app.get("/supported", readLimiter, (_req, res) => {
     res.json(facilitator.getSupported());
   });
 
-  app.post("/verify", async (req, res) => {
+  // Reject obvious dust amounts before they reach the facilitator — we'd
+  // otherwise burn SOL fees on transfers worth less than the fee.
+  function checkMinAmount(
+    paymentRequirements: { amount?: string } | undefined
+  ): string | null {
+    const raw = paymentRequirements?.amount;
+    if (!raw) return null;
+    try {
+      const v = BigInt(raw);
+      if (v < MIN_AMOUNT_BASE_UNITS) return "amount_below_minimum";
+    } catch {
+      return "amount_invalid";
+    }
+    return null;
+  }
+
+  app.post("/verify", writeLimiter, async (req, res) => {
     const { paymentPayload, paymentRequirements } = req.body ?? {};
     const network = paymentRequirements?.network as string | undefined;
     const amount = paymentRequirements?.amount as string | undefined;
@@ -102,6 +159,20 @@ async function main() {
           isValid: false,
           invalidReason: "missing_parameters",
           invalidMessage: "Missing paymentPayload or paymentRequirements",
+        });
+      }
+      const minViolation = checkMinAmount(paymentRequirements);
+      if (minViolation) {
+        analytics.capture("verify_request", undefined, {
+          ok: false,
+          reason: minViolation,
+          network,
+          amount,
+        });
+        return res.status(400).json({
+          isValid: false,
+          invalidReason: minViolation,
+          invalidMessage: `Amount must be >= ${MIN_AMOUNT_BASE_UNITS} base units`,
         });
       }
       const result = await facilitator.verify(paymentPayload, paymentRequirements);
@@ -124,12 +195,12 @@ async function main() {
       res.status(500).json({
         isValid: false,
         invalidReason: "unexpected_error",
-        invalidMessage: message,
+        invalidMessage: GENERIC_VERIFY_ERROR,
       });
     }
   });
 
-  app.post("/settle", async (req, res) => {
+  app.post("/settle", writeLimiter, async (req, res) => {
     const { paymentPayload, paymentRequirements } = req.body ?? {};
     const network = paymentRequirements?.network as string | undefined;
     const amount = paymentRequirements?.amount as string | undefined;
@@ -144,6 +215,22 @@ async function main() {
           success: false,
           errorReason: "missing_parameters",
           errorMessage: "Missing paymentPayload or paymentRequirements",
+          transaction: "",
+          network: "",
+        });
+      }
+      const minViolation = checkMinAmount(paymentRequirements);
+      if (minViolation) {
+        analytics.capture("settle_request", undefined, {
+          ok: false,
+          reason: minViolation,
+          network,
+          amount,
+        });
+        return res.status(400).json({
+          success: false,
+          errorReason: minViolation,
+          errorMessage: `Amount must be >= ${MIN_AMOUNT_BASE_UNITS} base units`,
           transaction: "",
           network: "",
         });
@@ -169,14 +256,14 @@ async function main() {
       res.status(500).json({
         success: false,
         errorReason: "unexpected_error",
-        errorMessage: message,
+        errorMessage: GENERIC_SETTLE_ERROR,
         transaction: "",
         network: "",
       });
     }
   });
 
-  app.get("/", (_req, res) => {
+  app.get("/", readLimiter, (_req, res) => {
     const supported = facilitator.getSupported();
     res.json({
       service: "agenticpay-facilitator",
