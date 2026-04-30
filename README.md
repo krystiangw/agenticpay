@@ -9,6 +9,10 @@ No Stripe. No accounts. No API keys.
 The full stack is here — SDK, CLI, paywall middleware, **self-hosted x402
 facilitator**, and a live LLM agent demo. All TypeScript, MIT licensed.
 
+> **Just want to test it?** Point your `mcp-server` at our hosted devnet
+> facilitator: `FACILITATOR_URL=https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com`
+> — no setup needed.
+
 ## Live demo
 
 A real Claude Opus agent receives a task, decides which paid tools to use,
@@ -105,15 +109,18 @@ node packages/cli/dist/index.js wallet show
 # → fund SOL at https://faucet.solana.com  (paste pubkey)
 # → fund USDC at https://faucet.circle.com (Solana Devnet, same pubkey)
 
-# 3. Start the self-hosted facilitator (terminal 1)
+# 3. (option A — fastest) Use our hosted devnet facilitator. Skip step 4.
+export FACILITATOR_URL=https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com
+
+# 3. (option B — fully self-hosted) Start your own facilitator (terminal 1)
 pnpm --filter @agentpay/facilitator dev
 # Note the printed feePayer address. It needs ~0.05 SOL devnet to cover fees.
 # Either airdrop or use the helper:
 pnpm --filter @agentpay/facilitator fund
+export FACILITATOR_URL=http://localhost:4022
 
 # 4. Start the paywalled mcp-server (terminal 2)
-PAY_TO=<recipient pubkey> FACILITATOR_URL=http://localhost:4022 \
-  pnpm --filter @agentpay/mcp-server dev
+PAY_TO=<recipient pubkey> pnpm --filter @agentpay/mcp-server dev
 
 # 5. Run the live LLM agent demo (terminal 3, needs ANTHROPIC_API_KEY in .env)
 pnpm --filter @agentpay/two-agent-demo agent
