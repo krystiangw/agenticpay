@@ -1,0 +1,50 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.krystiangw/agentpay",
+  "description": "Pay-per-tool-call HTTP server with x402 USDC paywall on Solana. Each tool declares a price; agents pay in USDC over x402; settlement happens on-chain in ~1.5s through a self-hosted or hosted facilitator.",
+  "version": "0.0.1",
+  "repository": {
+    "url": "https://github.com/krystiangw/agentpay",
+    "source": "github"
+  },
+  "websiteUrl": "https://krystiangw.github.io/agentpay/",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@agenticpay/mcp-server",
+      "version": "0.0.1",
+      "transport": {
+        "type": "streamable-http"
+      },
+      "environmentVariables": [
+        {
+          "name": "PAY_TO",
+          "description": "Solana pubkey that receives payments",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "FACILITATOR_URL",
+          "description": "x402 facilitator endpoint. Default https://x402.org/facilitator (testnet) or self-hosted.",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "https://x402.org/facilitator"
+        },
+        {
+          "name": "NETWORK",
+          "description": "CAIP-2 network identifier. Default solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1 (devnet)",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1"
+        },
+        {
+          "name": "PORT",
+          "description": "Listen port",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "4021"
+        }
+      ]
+    }
+  ]
+}

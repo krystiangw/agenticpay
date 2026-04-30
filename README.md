@@ -159,6 +159,22 @@ PAY_TO=<recipient pubkey> pnpm --filter @agenticpay/mcp-server dev
 pnpm --filter @agenticpay/two-agent-demo agent
 ```
 
+## Framework integrations
+
+Drop-in templates for the most common AI agent stacks live under `examples/`:
+
+| Framework | File |
+|---|---|
+| Anthropic SDK (canonical) | `examples/two-agent-demo/src/agent-llm.ts` |
+| LangChain.js | `examples/langchain-js/agent-with-paid-tools.ts` |
+| LangChain Python | `examples/langchain-python/agent_with_paid_tools.py` |
+| Eliza (Solana-native) | `examples/eliza/plugin-agentpay.ts` |
+| Mastra | `examples/mastra/paid-tool.ts` |
+| Vercel AI SDK | `examples/vercel-ai-sdk/paid-tool.ts` |
+| OpenAI Custom GPT | `examples/openai-gpt/action-schema.json` |
+
+See `examples/README.md` for the integration matrix.
+
 ## Status
 
 Pre-alpha. Devnet validated end-to-end. Mainnet config supported but requires

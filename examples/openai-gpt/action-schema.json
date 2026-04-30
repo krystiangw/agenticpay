@@ -1,0 +1,86 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "agentpay tools",
+    "description": "Pay-per-tool-call HTTP API. Each call settles in USDC on Solana via x402. Configure the operator's agentpay mcp-server (default port 4021) and expose a public URL via ngrok or similar before importing into a Custom GPT.",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "https://your-mcp-server.example.com",
+      "description": "Replace with the public URL of your agentpay mcp-server"
+    }
+  ],
+  "paths": {
+    "/tools/reverse": {
+      "post": {
+        "operationId": "reverseString",
+        "summary": "Reverse a string (costs 0.001 USDC, paid via x402 on Solana)",
+        "x-agentpay-price": "$0.001 USDC",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": { "type": "string" }
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reversed string returned after payment is settled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "result": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required. The PAYMENT-REQUIRED header carries x402 v2 payment requirements. The GPT must re-issue the request with an X-PAYMENT header containing a signed payload. See github.com/krystiangw/agentpay."
+          }
+        }
+      }
+    },
+    "/tools/word-count": {
+      "post": {
+        "operationId": "wordCount",
+        "summary": "Count words in a string (costs 0.0005 USDC)",
+        "x-agentpay-price": "$0.0005 USDC",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "text": { "type": "string" } },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Word count returned after payment is settled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "count": { "type": "integer" } }
+                }
+              }
+            }
+          },
+          "402": { "description": "Payment required (x402 v2)" }
+        }
+      }
+    }
+  }
+}
