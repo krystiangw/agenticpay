@@ -102,15 +102,17 @@ self-hosted route easy.
 | `packages/cli` | `agenticpay` command — wallet, balance, send |
 | `packages/mcp-server` | HTTP server with x402 paywall middleware. Each tool has a price. |
 | `packages/facilitator` | **Self-hosted x402 facilitator** — verify + settle USDC payments on Solana. Pays SOL fees on behalf of agents. |
+| `packages/eliza-plugin` | **Eliza plugin** — wraps paid HTTP endpoints as native Eliza Actions. Solana-native AI agents pay per tool call. |
 | `examples/two-agent-demo` | Real Claude Opus agent paying for tool calls |
 
 ## Install
 
 ```bash
-npm install @agenticpay/sdk        # Solana + USDC primitives
-npm install -g @agenticpay/cli     # `agenticpay` command
-npm install @agenticpay/mcp-server # paywalled HTTP server
-npm install @agenticpay/facilitator # self-hosted x402 facilitator
+npm install @agenticpay/sdk           # Solana + USDC primitives
+npm install -g @agenticpay/cli        # `agenticpay` command
+npm install @agenticpay/mcp-server    # paywalled HTTP server
+npm install @agenticpay/facilitator   # self-hosted x402 facilitator
+npm install @agenticpay/eliza-plugin  # Eliza plugin (Solana-native agents)
 ```
 
 Or clone the monorepo to get the live two-agent demo and edit-friendly

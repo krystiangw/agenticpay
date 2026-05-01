@@ -1,0 +1,55 @@
+{
+  "name": "@agenticpay/eliza-plugin",
+  "version": "0.0.1",
+  "description": "Pay-per-call x402 USDC micropayments for Eliza agents on Solana",
+  "license": "MIT",
+  "homepage": "https://github.com/krystiangw/agenticpay#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krystiangw/agenticpay.git",
+    "directory": "packages/eliza-plugin"
+  },
+  "keywords": [
+    "elizaos",
+    "eliza-plugin",
+    "x402",
+    "solana",
+    "usdc",
+    "ai-agents",
+    "payments",
+    "agentic-payments",
+    "stablecoin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@elizaos/core": ">=1.7.0 <3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@elizaos/core": { "optional": true }
+  },
+  "dependencies": {
+    "@solana/kit": "^5.5.0",
+    "@x402/core": "^2.11.0",
+    "@x402/fetch": "^2.11.0",
+    "@x402/svm": "^2.11.0"
+  }
+}

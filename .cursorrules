@@ -1,0 +1,100 @@
+# Cursor rules — agenticpay
+
+When working in this repository, follow the conventions below. These rules
+also apply when an outside developer copies this file into their own project
+to integrate agenticpay (drop it at their repo root as `.cursorrules`).
+
+## What this project is
+
+agenticpay is an open-source x402 micropayments stack for the MCP ecosystem
+on Solana. The repo ships:
+
+- `@agenticpay/sdk` — USDC + wallet primitives
+- `@agenticpay/cli` — `agentpay` command (wallet, balance, send)
+- `@agenticpay/mcp-server` — Express paywall middleware (each tool declares
+  a price)
+- `@agenticpay/facilitator` — first open-source self-hostable x402
+  facilitator (verify + settle on Solana, pays SOL fee on the payer's behalf)
+- `@agenticpay/eliza-plugin` — Eliza plugin wrapping x402 fetch
+- `examples/two-agent-demo` — Claude Opus paying autonomously
+
+Hosted devnet facilitator (free):
+  `https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com`
+
+## The day-1 footgun
+
+**Network, asset, and RPC must be consistent.** Mixing devnet network
+(`solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1`) with mainnet USDC mint
+(`EPjFW...`), or pointing the client at mainnet RPC while the facilitator
+runs on devnet, produces `transaction_simulation_failed: BlockhashNotFound`.
+Always verify all three line up.
+
+| Network ID (CAIP-2) | USDC mint | RPC |
+|---|---|---|
+| `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` (devnet) | `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU` | `https://api.devnet.solana.com` |
+| `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` (mainnet) | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` | `https://api.mainnet-beta.solana.com` |
+
+For free experiments use devnet. The hosted facilitator at
+`agentpay-facilitator-e9b20a5fee6a.herokuapp.com` supports both.
+
+## When suggesting code
+
+- Default to **devnet** unless the user explicitly says mainnet.
+- For new MCP servers, **always wire the paywall middleware before route
+  handlers** — `app.use(paymentMiddleware(routes, server))` must come before
+  `app.post('/tools/...')` definitions.
+- Use the **AssetAmount form** for `price` (`{ asset, amount }` in base
+  units), not the Money string form (`"$0.001"`). The string form falls
+  through to `@x402/svm`'s default money parser, which selects a devnet
+  asset even when the network is mainnet — see the audit log.
+- Treat `@agenticpay/sdk` exports (`generateKeypair`, `loadKeypair`,
+  `saveKeypair`, `transferUsdc`, `getUsdcBalance`) as the canonical API for
+  wallet handling. Don't reach into `@solana/spl-token` directly unless
+  you're writing the SDK itself.
+- Never log or echo back the raw 64-byte keypair bytes. They're written to
+  disk with `mode: 0o600` for a reason.
+
+## When suggesting paid tools
+
+- Floor each tool at a price ≥ 100 base units (USDC, $0.0001). Below that
+  the SOL gas paid by the facilitator exceeds the value of the transfer
+  — agenticpay's facilitator already rejects sub-100 amounts at the API
+  level, but it's friendlier to surface this in the route's `description`.
+
+## When suggesting agent code that pays for tools
+
+Use `@x402/fetch`'s `wrapFetchWithPayment` once at startup:
+
+```ts
+import { wrapFetchWithPayment } from "@x402/fetch";
+import { x402Client } from "@x402/core/client";
+import { ExactSvmScheme } from "@x402/svm/exact/client";
+import { createKeyPairSignerFromBytes } from "@solana/kit";
+
+const signer = await createKeyPairSignerFromBytes(senderKeypairBytes);
+const client = new x402Client();
+client.register(
+  "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+  new ExactSvmScheme(signer, { rpcUrl: "https://api.devnet.solana.com" })
+);
+const fetchWithPayment = wrapFetchWithPayment(globalThis.fetch, client);
+```
+
+Then call paid endpoints normally; the wrapper handles the 402 → sign →
+retry → settle round trip. The agent only needs USDC — the facilitator's
+fee_payer covers the SOL gas.
+
+## When debugging payment failures
+
+Use `examples/two-agent-demo/src/probe.ts` as a template for direct
+facilitator probes. Bypassing the wrapper isolates whether a problem is in
+the client, the resource server, or the facilitator.
+
+## When writing docs / READMEs / blog posts
+
+- Use **agenticpay** (not "agentpay" — the latter belongs to an unrelated
+  project on npm/GitHub).
+- Brand: open-source x402 stack for MCP. Always cite MIT license.
+- Hosted facilitator URL is `agentpay-facilitator-e9b20a5fee6a.herokuapp.com`
+  — that legacy hostname is correct, do not "fix" it to agenticpay (it's
+  baked into on-chain TX history).
