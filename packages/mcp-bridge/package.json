@@ -1,6 +1,7 @@
 {
   "name": "@agenticpay/mcp-bridge",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "mcpName": "io.github.krystiangw/agenticpay",
   "description": "Real MCP server (stdio + @modelcontextprotocol/sdk) that exposes x402-paywalled HTTP endpoints as MCP tools. Drop into Claude Desktop, Cursor, or any MCP client.",
   "license": "MIT",
   "homepage": "https://github.com/krystiangw/agenticpay#readme",
