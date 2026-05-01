@@ -39,6 +39,27 @@ importers:
         specifier: ^2.11.0
         version: 2.11.0(@solana/kit@5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))
 
+  packages/ai-sdk:
+    dependencies:
+      '@solana/kit':
+        specifier: ^5.5.0
+        version: 5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@x402/core':
+        specifier: ^2.11.0
+        version: 2.11.0
+      '@x402/fetch':
+        specifier: ^2.11.0
+        version: 2.11.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@x402/svm':
+        specifier: ^2.11.0
+        version: 2.11.0(@solana/kit@5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))
+      ai:
+        specifier: '>=4.0.0'
+        version: 6.0.172(zod@4.4.1)
+      zod:
+        specifier: '>=3.0.0'
+        version: 4.4.1
+
   packages/cli:
     dependencies:
       '@agenticpay/sdk':
@@ -55,7 +76,7 @@ importers:
     dependencies:
       '@elizaos/core':
         specifier: '>=1.7.0 <3.0.0'
-        version: 1.7.2(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 1.7.2(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@solana/kit':
         specifier: ^5.5.0
         version: 5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -138,6 +159,22 @@ packages:
 
   '@adraffy/ens-normalize@1.11.1':
     resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
+
+  '@ai-sdk/gateway@3.0.107':
+    resolution: {integrity: sha512-JwODLcuTe8rWXJwQcNPE5fiadjCOKHxNGtL5pHqEhFQSuWs6x47oVRkLs/Zw6eUhTsuXiZbyJ3QJHVIyLKX5hg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/provider-utils@4.0.25':
+    resolution: {integrity: sha512-yjGPZPiJm79ZOYk0anXn2LkVqUFgStZqEOdyoynhkaAg+yOCuv6PJwf+1gUW0eSIUnYEboT2TPbPX/bxZpx4gw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/provider@3.0.10':
+    resolution: {integrity: sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw==}
+    engines: {node: '>=18'}
 
   '@anthropic-ai/sdk@0.91.1':
     resolution: {integrity: sha512-LAmu761tSN9r66ixvmciswUj/ZC+1Q4iAfpedTfSVLeswRwnY3n2Nb6Tsk+cLPP28aLOPWeMgIuTuCcMC6W/iw==}
@@ -409,6 +446,10 @@ packages:
   '@noble/hashes@1.8.0':
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
+
+  '@opentelemetry/api@1.9.0':
+    resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
+    engines: {node: '>=8.0.0'}
 
   '@posthog/core@1.27.9':
     resolution: {integrity: sha512-7FFWWYWvRFxQqDXYzv8klCjk0Pox1IpuPr61eeOCBsKkmt6xvvHwH0jc3ObvwDXZj2NSAWg+V9N2E2F1ul2CRQ==}
@@ -952,6 +993,10 @@ packages:
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
 
+  '@vercel/oidc@3.2.0':
+    resolution: {integrity: sha512-UycprH3T6n3jH0k44NHMa7pnFHGu/N05MjojYr+Mc6I7obkoLIJujSWwin1pCvdy/eOxrI/l3uDLQsmcrOb4ug==}
+    engines: {node: '>= 20'}
+
   '@x402/core@2.11.0':
     resolution: {integrity: sha512-aqTfZc/BULrlWnd3I0lsqRQaH4gjJd8CsPcL16XqK2Lx5c6QDm+zCljgUVS1yj9BGJoZeQWTzI5hE+SVFkqMTw==}
 
@@ -997,6 +1042,12 @@ packages:
   agentkeepalive@4.6.0:
     resolution: {integrity: sha512-kja8j7PjmncONqaTsB8fQ+wE2mSU2DJ9D4XKoJ5PFWIdRMa6SLSN1ff4mOr4jCbfRSsxR4keIiySJU0N9T5hIQ==}
     engines: {node: '>= 8.0.0'}
+
+  ai@6.0.172:
+    resolution: {integrity: sha512-o12q2SDlrN4btPU2FkFSVEeZiKfQuSbDFixXH8I7AE/zuCXMbN9ilaPThdoAc8mS9+QnhUGy8cSP0IgT3Q+p0A==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
 
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
@@ -1259,6 +1310,10 @@ packages:
   eventemitter3@5.0.4:
     resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
 
+  eventsource-parser@3.0.8:
+    resolution: {integrity: sha512-70QWGkr4snxr0OXLRWsFLeRBIRPuQOvt4s8QYjmUlmlkyTZkRqS7EDVRZtzU3TiyDbXSzaOeF0XUKy8PchzukQ==}
+    engines: {node: '>=18.0.0'}
+
   evp_bytestokey@1.0.3:
     resolution: {integrity: sha512-/f2Go4TognH/KvCISP7OUsHn85hT9nUkxxA9BEWxFn+Oj9o8ZNLm/40hdlgSLyuOimsrTKLUMEorQexp/aPQeA==}
 
@@ -1438,6 +1493,9 @@ packages:
 
   json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
+
+  json-schema@0.4.0:
+    resolution: {integrity: sha512-es94M3nTIfsEPisRafak+HDLfHXnKBhV3vU5eqPcS3flIWqcxJWgXHXiey3YrpaNsanY5ei1VoYEbOzijuq9BA==}
 
   json-stringify-safe@5.0.1:
     resolution: {integrity: sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==}
@@ -1885,6 +1943,24 @@ snapshots:
 
   '@adraffy/ens-normalize@1.11.1': {}
 
+  '@ai-sdk/gateway@3.0.107(zod@4.4.1)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.10
+      '@ai-sdk/provider-utils': 4.0.25(zod@4.4.1)
+      '@vercel/oidc': 3.2.0
+      zod: 4.4.1
+
+  '@ai-sdk/provider-utils@4.0.25(zod@4.4.1)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.10
+      '@standard-schema/spec': 1.1.0
+      eventsource-parser: 3.0.8
+      zod: 4.4.1
+
+  '@ai-sdk/provider@3.0.10':
+    dependencies:
+      json-schema: 0.4.0
+
   '@anthropic-ai/sdk@0.91.1(zod@3.25.76)':
     dependencies:
       json-schema-to-ts: 3.1.1
@@ -1895,10 +1971,10 @@ snapshots:
 
   '@cfworker/json-schema@4.1.1': {}
 
-  '@elizaos/core@1.7.2(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@elizaos/core@1.7.2(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
-      '@langchain/core': 1.1.42(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
-      '@langchain/textsplitters': 1.0.1(@langchain/core@1.1.42(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))
+      '@langchain/core': 1.1.42(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@langchain/textsplitters': 1.0.1(@langchain/core@1.1.42(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))
       adze: 2.3.0
       crypto-browserify: 3.12.1
       dotenv: 17.4.2
@@ -1994,7 +2070,7 @@ snapshots:
   '@esbuild/win32-x64@0.27.7':
     optional: true
 
-  '@langchain/core@1.1.42(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@langchain/core@1.1.42(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       '@standard-schema/spec': 1.1.0
@@ -2002,7 +2078,7 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.6.0(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      langsmith: 0.6.0(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       mustache: 4.2.0
       p-queue: 6.6.2
       zod: 4.4.1
@@ -2013,9 +2089,9 @@ snapshots:
       - openai
       - ws
 
-  '@langchain/textsplitters@1.0.1(@langchain/core@1.1.42(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))':
+  '@langchain/textsplitters@1.0.1(@langchain/core@1.1.42(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))':
     dependencies:
-      '@langchain/core': 1.1.42(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@langchain/core': 1.1.42(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       js-tiktoken: 1.0.21
 
   '@napi-rs/canvas-android-arm64@0.1.100':
@@ -2077,6 +2153,8 @@ snapshots:
       '@noble/hashes': 1.8.0
 
   '@noble/hashes@1.8.0': {}
+
+  '@opentelemetry/api@1.9.0': {}
 
   '@posthog/core@1.27.9':
     dependencies:
@@ -2757,6 +2835,8 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
+  '@vercel/oidc@3.2.0': {}
+
   '@x402/core@2.11.0':
     dependencies:
       zod: 3.25.76
@@ -2829,6 +2909,14 @@ snapshots:
   agentkeepalive@4.6.0:
     dependencies:
       humanize-ms: 1.2.1
+
+  ai@6.0.172(zod@4.4.1):
+    dependencies:
+      '@ai-sdk/gateway': 3.0.107(zod@4.4.1)
+      '@ai-sdk/provider': 3.0.10
+      '@ai-sdk/provider-utils': 4.0.25(zod@4.4.1)
+      '@opentelemetry/api': 1.9.0
+      zod: 4.4.1
 
   ajv@8.20.0:
     dependencies:
@@ -3156,6 +3244,8 @@ snapshots:
 
   eventemitter3@5.0.4: {}
 
+  eventsource-parser@3.0.8: {}
+
   evp_bytestokey@1.0.3:
     dependencies:
       md5.js: 1.3.5
@@ -3390,12 +3480,15 @@ snapshots:
 
   json-schema-traverse@1.0.0: {}
 
+  json-schema@0.4.0: {}
+
   json-stringify-safe@5.0.1: {}
 
-  langsmith@0.6.0(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
+  langsmith@0.6.0(@opentelemetry/api@1.9.0)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
     dependencies:
       p-queue: 6.6.2
     optionalDependencies:
+      '@opentelemetry/api': 1.9.0
       ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   lru-cache@11.3.5: {}

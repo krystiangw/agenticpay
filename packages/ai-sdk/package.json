@@ -1,0 +1,53 @@
+{
+  "name": "@agenticpay/ai-sdk",
+  "version": "0.0.1",
+  "description": "Vercel AI SDK helpers for x402 paid tool calls — agents pay per tool invocation in USDC on Solana",
+  "license": "MIT",
+  "homepage": "https://github.com/krystiangw/agenticpay#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krystiangw/agenticpay.git",
+    "directory": "packages/ai-sdk"
+  },
+  "keywords": [
+    "vercel-ai-sdk",
+    "ai-sdk",
+    "x402",
+    "solana",
+    "usdc",
+    "ai-agents",
+    "tools",
+    "payments",
+    "agentic-payments"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "ai": ">=4.0.0",
+    "zod": ">=3.0.0"
+  },
+  "dependencies": {
+    "@solana/kit": "^5.5.0",
+    "@x402/core": "^2.11.0",
+    "@x402/fetch": "^2.11.0",
+    "@x402/svm": "^2.11.0"
+  }
+}

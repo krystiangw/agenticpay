@@ -103,6 +103,7 @@ self-hosted route easy.
 | `packages/mcp-server` | HTTP server with x402 paywall middleware. Each tool has a price. |
 | `packages/facilitator` | **Self-hosted x402 facilitator** — verify + settle USDC payments on Solana. Pays SOL fees on behalf of agents. |
 | `packages/eliza-plugin` | **Eliza plugin** — wraps paid HTTP endpoints as native Eliza Actions. Solana-native AI agents pay per tool call. |
+| `packages/ai-sdk` | **Vercel AI SDK helpers** — drop paid tools straight into `generateText` / `streamText`. |
 | `examples/two-agent-demo` | Real Claude Opus agent paying for tool calls |
 
 ## Install
@@ -113,6 +114,7 @@ npm install -g @agenticpay/cli        # `agenticpay` command
 npm install @agenticpay/mcp-server    # paywalled HTTP server
 npm install @agenticpay/facilitator   # self-hosted x402 facilitator
 npm install @agenticpay/eliza-plugin  # Eliza plugin (Solana-native agents)
+npm install @agenticpay/ai-sdk        # Vercel AI SDK paid tools
 ```
 
 Or clone the monorepo to get the live two-agent demo and edit-friendly
