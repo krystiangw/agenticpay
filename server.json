@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.krystiangw/agenticpay",
-  "description": "Pay-per-tool-call HTTP server with x402 USDC paywall on Solana. Each tool declares a price; agents pay in USDC over x402; settlement happens on-chain in ~1.5s through a self-hosted or hosted facilitator.",
+  "description": "x402 USDC paywall server for MCP tools on Solana — each tool declares a price.",
   "version": "0.0.1",
   "repository": {
     "url": "https://github.com/krystiangw/agenticpay",
