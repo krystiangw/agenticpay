@@ -1,0 +1,54 @@
+{
+  "name": "@agenticpay/mcp-bridge",
+  "version": "0.0.1",
+  "description": "Real MCP server (stdio + @modelcontextprotocol/sdk) that exposes x402-paywalled HTTP endpoints as MCP tools. Drop into Claude Desktop, Cursor, or any MCP client.",
+  "license": "MIT",
+  "homepage": "https://github.com/krystiangw/agenticpay#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krystiangw/agenticpay.git",
+    "directory": "packages/mcp-bridge"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "x402",
+    "solana",
+    "usdc",
+    "claude-desktop",
+    "cursor",
+    "agentic-payments",
+    "ai-agents"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "agenticpay-mcp-bridge": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@solana/kit": "^5.5.0",
+    "@x402/core": "^2.11.0",
+    "@x402/fetch": "^2.11.0",
+    "@x402/svm": "^2.11.0",
+    "zod": "^3.23.8"
+  }
+}
