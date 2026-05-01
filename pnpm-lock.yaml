@@ -18,6 +18,28 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  examples/research-server:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.91.1
+        version: 0.91.1(zod@3.25.76)
+      '@x402/core':
+        specifier: ^2.11.0
+        version: 2.11.0
+      '@x402/express':
+        specifier: ^2.11.0
+        version: 2.11.0(bufferutil@4.1.0)(express@4.22.1)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@x402/svm':
+        specifier: ^2.11.0
+        version: 2.11.0(@solana/kit@5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))
+      express:
+        specifier: ^4.21.2
+        version: 4.22.1
+    devDependencies:
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.25
+
   examples/two-agent-demo:
     dependencies:
       '@agenticpay/sdk':

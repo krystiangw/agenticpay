@@ -1,0 +1,21 @@
+{
+  "name": "@agenticpay/example-research-server",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Real-world x402 paywalled MCP server template — paid LLM-backed text tools (summarize, extract_entities, sentiment, translate) instead of toy reverse_string",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx --env-file=../../.env src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1",
+    "@x402/core": "^2.11.0",
+    "@x402/express": "^2.11.0",
+    "@x402/svm": "^2.11.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21"
+  }
+}

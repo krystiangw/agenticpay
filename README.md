@@ -172,6 +172,7 @@ Drop-in templates for the most common AI agent stacks live under `examples/`:
 | Framework | File |
 |---|---|
 | Anthropic SDK (canonical) | `examples/two-agent-demo/src/agent-llm.ts` |
+| Real-world paid server template (Claude-backed tools) | `examples/research-server/` |
 | LangChain.js | `examples/langchain-js/agent-with-paid-tools.ts` |
 | LangChain Python | `examples/langchain-python/agent_with_paid_tools.py` |
 | Eliza (Solana-native) | `examples/eliza/plugin-agenticpay.ts` |
