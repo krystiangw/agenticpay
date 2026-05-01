@@ -1,0 +1,76 @@
+name: Bug report
+description: Something isn't working in agenticpay
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report. Please don't include
+        secrets (keypairs, env values). For security issues see SECURITY.md.
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      description: Which package is affected?
+      options:
+        - "@agenticpay/sdk"
+        - "@agenticpay/cli"
+        - "@agenticpay/mcp-server"
+        - "@agenticpay/facilitator"
+        - "@agenticpay/eliza-plugin"
+        - "@agenticpay/ai-sdk"
+        - "@agenticpay/mcp-bridge"
+        - "examples/two-agent-demo"
+        - "hosted facilitator (agentpay-facilitator-e9b20a5fee6a.herokuapp.com)"
+        - "other / docs"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Package version (e.g., 0.0.1) or git SHA
+      placeholder: "0.0.1"
+
+  - type: dropdown
+    id: network
+    attributes:
+      label: Network
+      options:
+        - "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1 (devnet)"
+        - "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp (mainnet)"
+        - "other / N/A"
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A minimal repro. `examples/two-agent-demo/src/probe.ts` is a good template for direct facilitator probes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior (logs, error messages, TX hashes)
+      description: Paste relevant logs. **Redact any keypairs / secrets.**
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      placeholder: |
+        - OS:
+        - Node version:
+        - pnpm version:
+        - Solana RPC URL (if relevant):
