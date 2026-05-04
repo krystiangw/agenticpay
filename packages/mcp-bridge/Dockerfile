@@ -40,11 +40,15 @@ COPY --from=builder /repo/packages/mcp-bridge/package.json ./package.json
 COPY --from=builder /repo/packages/mcp-bridge/dist ./dist
 COPY --from=builder /repo/node_modules ./node_modules
 
-# Default to a deterministic placeholder keypair + empty tool list so the
+# Default to a valid placeholder keypair + a single no-op tool so the
 # Glama safety check can complete the MCP `initialize` / `tools/list`
-# handshake without any external calls. Real configs override these.
-ENV AGENTICPAY_BRIDGE_KEYPAIR='[59,21,116,167,74,162,179,87,200,49,246,74,1,109,17,233,131,29,244,28,160,16,95,189,177,93,60,170,225,152,7,29,135,148,247,232,12,63,234,112,151,199,71,5,194,126,80,228,210,34,161,227,176,206,229,36,12,109,119,233,30,3,248,90]'
-ENV AGENTICPAY_BRIDGE_TOOLS='[]'
+# handshake without any external calls. The keypair is a real Solana
+# Ed25519 pair (unfunded; never used to sign anything during the check).
+# The placeholder tool registers the `tools` capability — without at least
+# one tool the MCP SDK does not install a `tools/list` handler. Real
+# configs override every var via Claude Desktop / Cursor config.
+ENV AGENTICPAY_BRIDGE_KEYPAIR='[131,90,50,162,152,65,58,32,210,149,3,159,230,205,27,243,117,45,228,3,171,247,205,251,167,38,133,16,154,84,138,177,89,173,147,50,9,159,119,164,126,76,179,57,235,0,214,209,149,65,50,53,224,104,24,240,103,168,66,253,79,216,184,235]'
+ENV AGENTICPAY_BRIDGE_TOOLS='[{"name":"agenticpay_info","description":"Placeholder tool for the Glama introspection handshake. Replace AGENTICPAY_BRIDGE_TOOLS with your real paid endpoints.","url":"http://127.0.0.1/agenticpay-placeholder","inputSchema":{}}]'
 ENV AGENTICPAY_BRIDGE_NETWORK='solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'
 ENV AGENTICPAY_BRIDGE_RPC='https://api.devnet.solana.com'
 
