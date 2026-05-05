@@ -55,8 +55,26 @@
             "programmingLanguage": "TypeScript",
             "author": {
               "@type": "Person",
-              "name": "krystiangw",
-              "url": "https://github.com/krystiangw"
+              "name": "Krystian Gwizdała",
+              "alternateName": "krystiangw",
+              "url": "https://krystiangw.github.io/krystiangw/",
+              "image": "https://avatars.githubusercontent.com/u/6939376?v=4",
+              "jobTitle": "Senior Frontend Engineer",
+              "worksFor": {
+                "@type": "Organization",
+                "name": "TestGorilla",
+                "url": "https://www.testgorilla.com"
+              },
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Kraków",
+                "addressCountry": "PL"
+              },
+              "sameAs": [
+                "https://github.com/krystiangw",
+                "https://www.linkedin.com/in/krystiangw"
+              ],
+              "email": "mailto:gwizdala.kr@gmail.com"
             },
             "codeRepository": "https://github.com/krystiangw/agenticpay",
             "offers": {
@@ -74,8 +92,8 @@
             "license": "https://opensource.org/licenses/MIT",
             "author": {
               "@type": "Person",
-              "name": "krystiangw",
-              "url": "https://github.com/krystiangw"
+              "name": "Krystian Gwizdała",
+              "url": "https://krystiangw.github.io/krystiangw/"
             }
           }
         ]
@@ -273,6 +291,82 @@ FACILITATOR_URL=https://agentpay-facilitator-e9b20a5fee6a.herokuapp.com
           the facilitator that submits the on-chain settlement is open source
           and self-hostable.
         </p>
+      </section>
+
+      <!-- WHO'S BUILDING THIS -->
+      <section
+        id="author"
+        class="space-y-4 border-t border-zinc-800 pt-12"
+        itemscope
+        itemtype="https://schema.org/Person"
+      >
+        <h2 class="text-2xl font-bold">Who's building this</h2>
+        <div class="flex items-start gap-5">
+          <img
+            src="https://avatars.githubusercontent.com/u/6939376?v=4&s=120"
+            alt="Krystian Gwizdała"
+            itemprop="image"
+            class="w-20 h-20 rounded-full border border-zinc-800 flex-shrink-0"
+            loading="lazy"
+          />
+          <div class="space-y-3 text-zinc-400 leading-relaxed">
+            <p>
+              Hi, I'm <span class="text-zinc-200" itemprop="name">Krystian Gwizdała</span> —
+              a TypeScript engineer based in
+              <span itemprop="address" itemscope itemtype="https://schema.org/PostalAddress"
+                ><span itemprop="addressLocality">Kraków</span>,
+                <span itemprop="addressCountry">Poland</span></span
+              >. 10+ years building web products end-to-end across frontend
+              and backend (TypeScript, Node, Angular, lately blockchain
+              integrations). Day job: senior frontend engineer at
+              <a
+                href="https://www.testgorilla.com"
+                rel="noopener"
+                class="underline decoration-zinc-700 hover:decoration-zinc-300"
+                itemprop="worksFor"
+                >TestGorilla</a
+              >.
+            </p>
+            <p>
+              agenticpay started as a side project after I hit the
+              agent&nbsp;→&nbsp;tool monetization wall myself. Open to design
+              partners, contributors, and "hey, this is broken" emails.
+            </p>
+            <p class="text-sm pt-2 flex flex-wrap gap-x-4 gap-y-1">
+              <a
+                href="https://github.com/krystiangw"
+                rel="noopener"
+                class="underline hover:text-zinc-200"
+                itemprop="sameAs"
+                onclick="posthog.capture('author_link_click', {target: 'github'})"
+                >GitHub</a
+              >
+              <a
+                href="https://www.linkedin.com/in/krystiangw"
+                rel="noopener"
+                class="underline hover:text-zinc-200"
+                itemprop="sameAs"
+                onclick="posthog.capture('author_link_click', {target: 'linkedin'})"
+                >LinkedIn</a
+              >
+              <a
+                href="https://krystiangw.github.io/krystiangw/"
+                rel="noopener"
+                class="underline hover:text-zinc-200"
+                itemprop="url"
+                onclick="posthog.capture('author_link_click', {target: 'profile'})"
+                >profile</a
+              >
+              <a
+                href="mailto:gwizdala.kr@gmail.com"
+                class="underline hover:text-zinc-200"
+                itemprop="email"
+                onclick="posthog.capture('author_link_click', {target: 'email'})"
+                >email</a
+              >
+            </p>
+          </div>
+        </div>
       </section>
 
       <!-- FOOTER -->
