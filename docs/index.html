@@ -3,19 +3,84 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>agenticpay — get paid by AI agents</title>
+    <title>agenticpay — get paid by AI agents (open-source x402 stack for MCP on Solana)</title>
     <meta
       name="description"
-      content="Open-source payment infrastructure for the MCP ecosystem. Declare a price on any tool, agents pay in USDC over x402, settles on Solana in ~1.5 seconds."
+      content="Open-source x402 micropayments stack for MCP servers. Declare a price on any tool, agents pay in USDC, settles on Solana in ~1.5 seconds. Self-hosted facilitator + TypeScript SDK + paywall middleware."
     />
-    <meta property="og:title" content="agenticpay" />
+    <meta name="keywords" content="x402, MCP, Model Context Protocol, Solana, USDC, agent payments, AI agents, micropayments, stablecoin, Claude, OpenAI, monetize MCP server, agentic payments, agenticpay, open-source facilitator" />
+    <meta name="author" content="krystiangw" />
+    <link rel="canonical" href="https://krystiangw.github.io/agenticpay/" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23000'/%3E%3Ctext x='50' y='62' font-size='52' text-anchor='middle' fill='%23a3e635' font-family='monospace' font-weight='bold'%3E%24%3C/text%3E%3C/svg%3E" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://krystiangw.github.io/agenticpay/" />
+    <meta property="og:title" content="agenticpay — get paid by AI agents" />
     <meta
       property="og:description"
-      content="Open-source x402 micropayments for AI agents. Self-hosted facilitator, MCP middleware, live LLM agent demo."
+      content="Open-source x402 micropayments stack for MCP servers. Declare a price on any tool, agents pay in USDC over x402, settles on Solana in ~1.5s. Includes self-hosted facilitator, TypeScript SDK, and live Claude Opus agent demo."
     />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <link rel="icon" href="data:," />
+    <meta property="og:site_name" content="agenticpay" />
+    <meta property="og:image" content="https://opengraph.githubassets.com/1/krystiangw/agenticpay" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="600" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://krystiangw.github.io/agenticpay/" />
+    <meta name="twitter:title" content="agenticpay — get paid by AI agents" />
+    <meta
+      name="twitter:description"
+      content="Open-source x402 micropayments stack for MCP servers on Solana. Self-hosted facilitator, TypeScript SDK, live Claude Opus agent demo."
+    />
+    <meta name="twitter:image" content="https://opengraph.githubassets.com/1/krystiangw/agenticpay" />
+
+    <!-- JSON-LD: SoftwareApplication + SourceCodeRepository -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "agenticpay",
+            "alternateName": "@agenticpay",
+            "description": "Open-source x402 micropayments stack for MCP servers. Declare a price on any tool, agents pay in USDC over x402, settles on Solana in ~1.5 seconds. Includes self-hosted facilitator, TypeScript SDK, paywall middleware, and live Claude Opus agent demo.",
+            "url": "https://krystiangw.github.io/agenticpay/",
+            "applicationCategory": "DeveloperApplication",
+            "applicationSubCategory": "PaymentInfrastructure",
+            "operatingSystem": "Cross-platform",
+            "softwareVersion": "0.0.2",
+            "license": "https://opensource.org/licenses/MIT",
+            "programmingLanguage": "TypeScript",
+            "author": {
+              "@type": "Person",
+              "name": "krystiangw",
+              "url": "https://github.com/krystiangw"
+            },
+            "codeRepository": "https://github.com/krystiangw/agenticpay",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "keywords": "x402, MCP, Model Context Protocol, Solana, USDC, agent payments, micropayments, stablecoin"
+          },
+          {
+            "@type": "SoftwareSourceCode",
+            "name": "agenticpay",
+            "codeRepository": "https://github.com/krystiangw/agenticpay",
+            "programmingLanguage": "TypeScript",
+            "license": "https://opensource.org/licenses/MIT",
+            "author": {
+              "@type": "Person",
+              "name": "krystiangw",
+              "url": "https://github.com/krystiangw"
+            }
+          }
+        ]
+      }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PostHog: anonymous web analytics. Project key is write-only (safe in client). -->
     <script>
