@@ -72,6 +72,19 @@ export interface BridgeConfig {
   serverName?: string;
   /** Server version. Default: "0.0.1". */
   serverVersion?: string;
+  /**
+   * Refuse any single payment above this amount, in base units of the
+   * payment asset (USDC has 6 decimals, so "1000" = 0.001 USDC).
+   * Unset = no per-call cap.
+   */
+  maxPaymentPerCall?: string;
+  /**
+   * Refuse payments once the cumulative total for this bridge process
+   * would exceed this amount, in base units of the payment asset.
+   * Counted when a payment is signed, so a settlement that later fails
+   * still consumes budget (conservative). Unset = no session budget.
+   */
+  sessionBudget?: string;
 }
 
 /**
@@ -87,6 +100,47 @@ export async function createBridge(config: BridgeConfig): Promise<void> {
     config.network,
     new ExactSvmScheme(signer, { rpcUrl: config.rpcUrl })
   );
+
+  const perCallCap =
+    config.maxPaymentPerCall !== undefined
+      ? BigInt(config.maxPaymentPerCall)
+      : undefined;
+  const sessionBudget =
+    config.sessionBudget !== undefined
+      ? BigInt(config.sessionBudget)
+      : undefined;
+  let sessionSpent = 0n;
+  if (perCallCap !== undefined || sessionBudget !== undefined) {
+    // Filtering a requirement out means the client has no acceptable way to
+    // pay, so the wrapped fetch rejects and the tool call surfaces an error
+    // instead of silently overspending.
+    x402.registerPolicy((_x402Version, requirements) =>
+      requirements.filter((req) => {
+        const amount = BigInt(req.amount);
+        if (perCallCap !== undefined && amount > perCallCap) return false;
+        if (sessionBudget !== undefined && sessionSpent + amount > sessionBudget)
+          return false;
+        return true;
+      })
+    );
+    if (sessionBudget !== undefined) {
+      // Reserve the budget synchronously before signing. The policy filter
+      // above is only advisory: concurrent tool calls could all pass it
+      // before any payment finishes, so the check-and-reserve here (atomic —
+      // no await between check and update) is the actual enforcement.
+      x402.onBeforePaymentCreation(async (context) => {
+        const amount = BigInt(context.selectedRequirements.amount);
+        if (sessionSpent + amount > sessionBudget) {
+          return {
+            abort: true as const,
+            reason: `session budget exceeded: spent ${sessionSpent} + ${amount} > ${sessionBudget} base units`,
+          };
+        }
+        sessionSpent += amount;
+      });
+    }
+  }
+
   const fetchWithPayment = wrapFetchWithPayment(globalThis.fetch, x402);
 
   const server = new McpServer({
@@ -150,6 +204,8 @@ export async function createBridge(config: BridgeConfig): Promise<void> {
  *    inputSchema is a JSON-Schema-ish object map of `{ name: { type: "string" } }`,
  *    coerced into a flat ZodRawShape (only string + number + boolean supported
  *    here for simplicity).
+ *  - AGENTICPAY_BRIDGE_MAX_PER_CALL — optional per-call spend cap, base units
+ *  - AGENTICPAY_BRIDGE_SESSION_BUDGET — optional cumulative spend cap, base units
  */
 export function loadConfigFromEnv(env: NodeJS.ProcessEnv): BridgeConfig {
   const keypairRaw = env.AGENTICPAY_BRIDGE_KEYPAIR;
@@ -188,7 +244,29 @@ export function loadConfigFromEnv(env: NodeJS.ProcessEnv): BridgeConfig {
     return def;
   });
 
-  return { keypairBytes, network, rpcUrl, tools };
+  const bridgeConfig: BridgeConfig = { keypairBytes, network, rpcUrl, tools };
+  if (env.AGENTICPAY_BRIDGE_MAX_PER_CALL) {
+    bridgeConfig.maxPaymentPerCall = parseBaseUnits(
+      "AGENTICPAY_BRIDGE_MAX_PER_CALL",
+      env.AGENTICPAY_BRIDGE_MAX_PER_CALL
+    );
+  }
+  if (env.AGENTICPAY_BRIDGE_SESSION_BUDGET) {
+    bridgeConfig.sessionBudget = parseBaseUnits(
+      "AGENTICPAY_BRIDGE_SESSION_BUDGET",
+      env.AGENTICPAY_BRIDGE_SESSION_BUDGET
+    );
+  }
+  return bridgeConfig;
+}
+
+function parseBaseUnits(name: string, value: string): string {
+  if (!/^\d+$/.test(value)) {
+    throw new Error(
+      `${name} must be a non-negative integer in base units of the payment asset (USDC: "1000" = 0.001), got: ${value}`
+    );
+  }
+  return value;
 }
 
 function parseSimpleInputSchema(

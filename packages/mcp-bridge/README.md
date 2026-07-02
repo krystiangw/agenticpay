@@ -42,6 +42,30 @@ Restart Claude Desktop. The agenticpay tools (e.g. `reverse_string`) appear
 in the conversation. Claude calls them; the bridge pays, settles, returns
 the result.
 
+## Spend caps
+
+The bridge signs payments autonomously, so cap what it may spend. Both caps
+are expressed in base units of the payment asset (USDC has 6 decimals, so
+`"1000"` = 0.001 USDC):
+
+```json
+"env": {
+  "AGENTICPAY_BRIDGE_MAX_PER_CALL": "5000",
+  "AGENTICPAY_BRIDGE_SESSION_BUDGET": "100000"
+}
+```
+
+- `AGENTICPAY_BRIDGE_MAX_PER_CALL` — refuse any single payment above this
+  amount (here: 0.005 USDC).
+- `AGENTICPAY_BRIDGE_SESSION_BUDGET` — refuse payments once the bridge
+  process's cumulative spend would exceed this amount (here: 0.10 USDC).
+  Counted when a payment is signed, so a settlement that later fails still
+  consumes budget.
+
+A refused payment surfaces to the MCP client as a tool error — the wallet is
+never touched. Programmatic equivalents: `maxPaymentPerCall` and
+`sessionBudget` in `BridgeConfig`.
+
 ## Programmatic use
 
 ```ts
