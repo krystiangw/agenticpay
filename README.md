@@ -208,6 +208,29 @@ at a hosted one.
 This repo ships a complete facilitator implementation. You can self-host it,
 fork it, audit it, or deploy it as a service for your own users.
 
+## What happens when a paid tool call fails?
+
+Short version: **a failed tool call is never charged.** x402 settlement is an
+irreversible push, so the middleware is careful about *when* it settles:
+
+1. **Verify before execute.** The payment payload (signature, funds,
+   requirements match) is verified before your tool handler runs. Invalid
+   payment → HTTP 402, the tool never executes.
+2. **Execute with a buffered response.** The handler runs, but its response is
+   held back — nothing is sent to the agent yet.
+3. **Settle only on success.** If the handler responds with status ≥ 400, the
+   middleware skips settlement entirely and just returns the error. The agent
+   pays nothing for a failed call.
+4. **No result without payment.** If on-chain settlement itself fails, the
+   buffered tool result is discarded and the agent gets a payment error
+   instead — the server never leaks a result it wasn't paid for.
+
+What this doesn't cover: a tool that returns `200 OK` with a junk answer is
+still charged — the protocol can't judge response quality. That's what keeps
+per-call prices micro ($0.0005–$0.001 in the demo): the worst case is capped
+at one call's price, and quality enforcement belongs to a reputation layer
+(see Roadmap) rather than the payment protocol.
+
 ## License
 
 MIT
