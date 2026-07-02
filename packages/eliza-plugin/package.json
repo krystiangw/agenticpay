@@ -44,12 +44,17 @@
     "@elizaos/core": ">=1.7.0 <3.0.0"
   },
   "peerDependenciesMeta": {
-    "@elizaos/core": { "optional": true }
+    "@elizaos/core": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@solana/kit": "^7.0.0",
     "@x402/core": "^2.11.0",
     "@x402/fetch": "^2.11.0",
     "@x402/svm": "^2.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0"
   }
 }
