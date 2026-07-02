@@ -19,7 +19,7 @@ jobs:
     name: Publish server.json to MCP Registry
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download mcp-publisher binary
         run: |
