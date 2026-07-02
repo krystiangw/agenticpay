@@ -9,6 +9,11 @@ updates:
       time: "06:00"
       timezone: "Europe/Warsaw"
     open-pull-requests-limit: 5
+    # Let fresh releases soak before we pull them in — most supply-chain
+    # compromises are caught and yanked within days of publish.
+    cooldown:
+      default-days: 3
+      semver-major-days: 14
     groups:
       x402:
         patterns:
