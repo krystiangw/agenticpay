@@ -30,8 +30,8 @@ importers:
   examples/research-server:
     dependencies:
       '@anthropic-ai/sdk':
-        specifier: ^0.95.1
-        version: 0.95.1(zod@3.25.76)
+        specifier: ^0.107.0
+        version: 0.107.0(zod@3.25.76)
       '@x402/core':
         specifier: ^2.11.0
         version: 2.11.0
@@ -58,8 +58,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
       '@anthropic-ai/sdk':
-        specifier: ^0.95.1
-        version: 0.95.1(zod@3.25.76)
+        specifier: ^0.107.0
+        version: 0.107.0(zod@3.25.76)
       '@solana/kit':
         specifier: ^7.0.0
         version: 7.0.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.3)(utf-8-validate@6.0.6)
@@ -261,8 +261,8 @@ packages:
     resolution: {integrity: sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw==}
     engines: {node: '>=18'}
 
-  '@anthropic-ai/sdk@0.95.1':
-    resolution: {integrity: sha512-OO9AF7hmAoU492c/mD7Q2cPqI2WNAj7rAPHlawgBeUgpwiboLRiDs+grsErGWeHHP9ZRWfzq2OVrODTt8aITVg==}
+  '@anthropic-ai/sdk@0.107.0':
+    resolution: {integrity: sha512-RWDWyvIeZnatUTzyX8+ayFzAqqLyoDHKnDEODFyW8H89zH+qEsh5h6XAmnbHY5DCoa58o3rjuNe3F3Hg851ayA==}
     hasBin: true
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
@@ -272,6 +272,10 @@ packages:
 
   '@babel/runtime@7.29.2':
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.29.7':
+    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
   '@cfworker/json-schema@4.1.1':
@@ -2136,7 +2140,7 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@anthropic-ai/sdk@0.95.1(zod@3.25.76)':
+  '@anthropic-ai/sdk@0.107.0(zod@3.25.76)':
     dependencies:
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.0.0
@@ -2144,6 +2148,8 @@ snapshots:
       zod: 3.25.76
 
   '@babel/runtime@7.29.2': {}
+
+  '@babel/runtime@7.29.7': {}
 
   '@cfworker/json-schema@4.1.1': {}
 
@@ -3749,7 +3755,7 @@ snapshots:
 
   json-schema-to-ts@3.1.1:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       ts-algebra: 2.0.0
 
   json-schema-traverse@1.0.0: {}
