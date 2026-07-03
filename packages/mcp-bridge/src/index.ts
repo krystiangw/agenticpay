@@ -272,7 +272,8 @@ function parseBaseUnits(name: string, value: string): string {
 function parseSimpleInputSchema(
   schema: Record<string, { type: "string" | "number" | "boolean" }>
 ): ZodRawShape {
-  const out: ZodRawShape = {};
+  // ZodRawShape is Readonly in zod 4, so build a mutable record first.
+  const out: Record<string, z.ZodType> = {};
   for (const [key, def] of Object.entries(schema)) {
     if (def.type === "string") out[key] = z.string();
     else if (def.type === "number") out[key] = z.number();
