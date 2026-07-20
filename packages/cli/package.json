@@ -39,6 +39,6 @@
     "commander": "^15.0.0"
   },
   "devDependencies": {
-    "@types/node": "^26.0.1"
+    "@types/node": "^26.1.1"
   }
 }
