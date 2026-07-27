@@ -88,35 +88,37 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 export class ResourceCatalog {
-  /**
-   * Entries keyed by resource URL, each tagged with the payTo that first
-   * listed it. See `record()` for why ownership is tracked.
-   */
+  /** Entries keyed by normalized resource URL, in order of last update. */
   private readonly entries = new Map<
     string,
-    { owner: string; entry: DiscoveredResource }
+    { entry: DiscoveredResource }
   >();
 
   /**
-   * Origins whose resources this facilitator will publish, declared by the
-   * operator. Empty means publish nothing; the single entry "*" means publish
-   * anything. See `record()` for why the default is closed.
+   * Operator-declared origin → payee. A resource is published only when its
+   * origin is listed *and* the settlement paid the payee declared for it.
+   * Empty publishes nothing. An origin of "*" matches any origin, still only
+   * for its declared payee. See `record()` for why both halves are needed.
    */
-  private readonly allowedOrigins: ReadonlySet<string>;
+  private readonly publishable: ReadonlyMap<string, string>;
 
-  constructor(allowedOrigins: Iterable<string> = []) {
-    this.allowedOrigins = new Set(allowedOrigins);
+  constructor(publishable: Iterable<readonly [string, string]> = []) {
+    this.publishable = new Map(publishable);
   }
 
-  /** True when the operator has opted this facilitator into publishing at all. */
-  private publishes(resourceUrl: string): boolean {
-    if (this.allowedOrigins.size === 0) return false;
-    if (this.allowedOrigins.has("*")) return true;
+  private publishes(resourceUrl: string, payTo: string): boolean {
+    if (this.publishable.size === 0) return false;
+
+    const wildcard = this.publishable.get("*");
+    if (wildcard !== undefined && wildcard === payTo) return true;
+
+    let origin: string;
     try {
-      return this.allowedOrigins.has(new URL(resourceUrl).origin);
+      origin = new URL(resourceUrl).origin;
     } catch {
       return false;
     }
+    return this.publishable.get(origin) === payTo;
   }
 
   /**
@@ -149,15 +151,21 @@ export class ResourceCatalog {
    * like.
    *
    * So the index is not derived from trust in payers at all. The operator
-   * declares which origins this facilitator publishes, and a settlement only
-   * ever refreshes the live terms of a resource that was already sanctioned.
-   * With nothing declared we publish nothing, which is why the endpoint answers
-   * with an empty, valid response until it is configured.
+   * declares origin → payee pairs, and a settlement only ever refreshes the
+   * live terms of a resource that was already sanctioned. With nothing declared
+   * we publish nothing, which is why the endpoint answers with an empty, valid
+   * response until it is configured.
    *
-   * Residual, and worth knowing: within a declared origin a payer can still
-   * name a path that is not a real endpoint. That pollutes only the operator's
-   * own namespace, which is a different order of problem from an open index.
-   * Ownership by payTo below limits it further.
+   * Both halves of the pair carry weight. Gating on origin alone would let
+   * anyone settle to an address they control while claiming a URL under a
+   * declared origin — clients discovering that resource would then be told to
+   * pay the attacker. Gating on payee alone would let them attach any URL to a
+   * minimum payment sent to a declared, public address.
+   *
+   * Residual: someone paying the declared payee can name a path under that
+   * origin which is not a real endpoint. They are paying the operator to do it
+   * and the advertised terms still point at the operator, so this is namespace
+   * clutter rather than misdirected money.
    */
   record(
     payload: PaymentPayload | undefined,
@@ -205,16 +213,18 @@ export class ResourceCatalog {
 
     const resource = normalizeResourceUrl(discovered.resourceUrl);
     if (!resource) return;
-    if (!this.publishes(resource)) return;
 
     const terms = sanitizeRequirements(requirements);
     if (!terms) return;
 
-    // First payee to list a resource keeps it. Without this, anyone able to
-    // settle could point an existing listing at their own declaration.
-    const existing = this.entries.get(resource);
-    if (existing && existing.owner !== terms.payTo) return;
+    // Origin *and* payee, both from operator config. Either alone is useless:
+    // a payer picks the URL freely, so an origin check alone lets them point a
+    // listing under our origin at their own address and collect payments meant
+    // for us; and a payee check alone lets them attach any URL to a minimum
+    // payment sent to our public address.
+    if (!this.publishes(resource, terms.payTo)) return;
 
+    const existing = this.entries.get(resource);
     const accepts = mergeAccepts(existing?.entry.accepts, terms);
 
     const description = boundedText(
@@ -234,7 +244,6 @@ export class ResourceCatalog {
     // arbitrary.
     this.entries.delete(resource);
     this.entries.set(resource, {
-      owner: terms.payTo,
       entry: {
         resource,
         // The SDK discriminates the two kinds by shape: an MCP tool carries

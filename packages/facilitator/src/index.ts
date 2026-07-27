@@ -53,16 +53,35 @@ const DEVNET_RPC =
 const MAINNET_RPC =
   process.env.SOLANA_MAINNET_RPC ?? "https://api.mainnet-beta.solana.com";
 
-// Origins this facilitator is willing to publish in its Bazaar index, e.g.
-// "https://api.example.com,https://tools.example.com". Empty publishes nothing;
-// "*" publishes every settled resource and is only safe if you accept that
-// anyone who can settle can list anything. See ResourceCatalog.record().
-const DISCOVERY_RESOURCE_ORIGINS = (
-  process.env.DISCOVERY_RESOURCE_ORIGINS ?? ""
+// Which resources this facilitator publishes in its Bazaar index, as
+// `origin=payee` pairs:
+//
+//   DISCOVERY_RESOURCES=https://api.example.com=PayeeAddr,https://tools.example.com=OtherAddr
+//
+// A resource is listed only when its origin appears here *and* the settlement
+// paid that origin's declared payee. Unset publishes nothing. An origin of "*"
+// matches any origin, still only for its declared payee. See
+// ResourceCatalog.record() for why both halves are required.
+const DISCOVERY_RESOURCES: [string, string][] = (
+  process.env.DISCOVERY_RESOURCES ?? ""
 )
   .split(",")
-  .map((o) => o.trim())
-  .filter((o) => o.length > 0);
+  .map((pair) => pair.trim())
+  .filter((pair) => pair.length > 0)
+  .flatMap((pair) => {
+    const at = pair.lastIndexOf("=");
+    if (at <= 0) {
+      console.warn(`[discovery] ignoring malformed DISCOVERY_RESOURCES entry: ${pair}`);
+      return [];
+    }
+    const origin = pair.slice(0, at).trim();
+    const payee = pair.slice(at + 1).trim();
+    if (!origin || !payee) {
+      console.warn(`[discovery] ignoring malformed DISCOVERY_RESOURCES entry: ${pair}`);
+      return [];
+    }
+    return [[origin, payee] as [string, string]];
+  });
 
 const SOLANA_DEVNET_CAIP2: Network =
   "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
@@ -145,10 +164,10 @@ async function main() {
   //
   // Settling authenticates the transfer, never the resource metadata riding
   // with it, so who may be listed is the operator's call and not a payer's:
-  // set DISCOVERY_RESOURCE_ORIGINS to the origins you host. Unset publishes
+  // set DISCOVERY_RESOURCES to the origin=payee pairs you host. Unset publishes
   // nothing, and the endpoint answers with a valid empty index. See
   // ResourceCatalog.record() for the full trust model.
-  const catalog = new ResourceCatalog(DISCOVERY_RESOURCE_ORIGINS);
+  const catalog = new ResourceCatalog(DISCOVERY_RESOURCES);
 
   app.get("/discovery/resources", readLimiter, (req, res) => {
     res.json(
