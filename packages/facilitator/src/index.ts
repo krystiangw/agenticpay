@@ -271,8 +271,10 @@ async function main() {
       // verifying does not consume the payment, so a single valid payload could
       // be replayed to stuff the public index with arbitrary URLs. A settlement
       // lands on chain, so it cannot be replayed and costs the payer real value.
+      // Pass the requirements settlement validated against, not the payload's
+      // own copy, so we only ever advertise terms that were really settled.
       if (result.success) {
-        catalog.record(paymentPayload);
+        catalog.record(paymentPayload, paymentRequirements);
       }
       analytics.capture("settle_request", result.payer, {
         ok: result.success,

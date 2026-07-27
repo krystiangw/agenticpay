@@ -20,7 +20,7 @@
  * process.
  */
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
-import { sanitizeResourceServiceMetadata } from "@x402/extensions/bazaar";
+import { extractDiscoveryInfo } from "@x402/extensions/bazaar";
 
 /** Mirrors `DiscoveryResource` from @x402/extensions. */
 export interface DiscoveredResource {
@@ -66,6 +66,12 @@ const MAX_RESOURCE_URL_LENGTH = 2048;
 const MAX_DESCRIPTION_LENGTH = 512;
 const MAX_MIME_TYPE_LENGTH = 128;
 
+// The extension echo is attacker-controlled and the body parser admits 256 KB,
+// so retaining it verbatim would let 1000 entries pin ~256 MB — more than the
+// dyno has. Keep only the bazaar declaration, and only when it serializes
+// small enough to be worth echoing.
+const MAX_EXTENSIONS_BYTES = 8 * 1024;
+
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
@@ -73,7 +79,7 @@ export class ResourceCatalog {
   private readonly entries = new Map<string, DiscoveredResource>();
 
   /**
-   * Record a resource from a payment payload.
+   * Record a resource from a settled payment.
    *
    * Call this only after a *settlement* succeeds. Verification alone is not
    * enough: verifying does not consume the payment, so one valid payload could
@@ -81,34 +87,44 @@ export class ResourceCatalog {
    * puts the transaction on chain, which cannot be replayed and costs the payer
    * real value — that is what keeps this public index from becoming a link farm.
    *
-   * Note the discovery metadata lives on the *payload* (`resource`,
-   * `extensions`), not on PaymentRequirements, whose type carries only the
-   * payment terms.
+   * `requirements` must be the object settlement validated against, not
+   * `payload.accepted`. The two are separate inputs and a caller is free to
+   * disagree with itself: settlement checks the transfer against the former, so
+   * publishing the latter would advertise asset/payTo/amount terms that were
+   * never actually settled.
    */
-  record(payload: PaymentPayload | undefined): void {
-    const resource = normalizeResourceUrl(payload?.resource?.url);
-    if (!resource || !payload) return;
+  record(
+    payload: PaymentPayload | undefined,
+    requirements: PaymentRequirements | undefined
+  ): void {
+    if (!payload || !requirements) return;
 
-    const extensions = isPlainObject(payload.extensions)
-      ? payload.extensions
-      : undefined;
+    // The bazaar extension is the resource server's opt-in to being listed, and
+    // it is what carries the invocation metadata that makes an entry useful.
+    // extractDiscoveryInfo validates the declaration against its own schema and
+    // yields null when there isn't a usable one, so a plain payment — or a
+    // malformed declaration — is simply not indexed. It throws on validation
+    // failure, hence the guard.
+    let discovered;
+    try {
+      discovered = extractDiscoveryInfo(payload, requirements);
+    } catch {
+      return;
+    }
+    if (!discovered) return;
 
-    // serviceName / tags / iconUrl are attacker-supplied, so run them through
-    // the SDK's own bazaar rules (tag count and charset limits, absolute-http
-    // icon URLs) instead of trusting them. Invalid fields are dropped silently.
-    const meta = sanitizeResourceServiceMetadata(payload.resource ?? undefined);
+    const resource = normalizeResourceUrl(discovered.resourceUrl);
+    if (!resource) return;
 
     const existing = this.entries.get(resource);
-    const accepts = mergeAccepts(existing?.accepts, payload.accepted);
+    const accepts = mergeAccepts(existing?.accepts, requirements);
 
     const description = boundedText(
-      payload.resource?.description,
+      discovered.description,
       MAX_DESCRIPTION_LENGTH
     );
-    const mimeType = boundedText(
-      payload.resource?.mimeType,
-      MAX_MIME_TYPE_LENGTH
-    );
+    const mimeType = boundedText(discovered.mimeType, MAX_MIME_TYPE_LENGTH);
+    const extensions = boundedExtensions(discovered.extensions);
 
     // Re-inserting moves the key to the end of the Map's iteration order, which
     // is what makes the eviction below least-recently-updated rather than
@@ -116,16 +132,19 @@ export class ResourceCatalog {
     this.entries.delete(resource);
     this.entries.set(resource, {
       resource,
-      type: resourceType(extensions),
+      // The SDK discriminates the two resource kinds by shape: an MCP tool
+      // carries toolName, an HTTP endpoint carries method.
+      type: "toolName" in discovered ? "mcp" : "http",
       x402Version:
-        typeof payload.x402Version === "number" ? payload.x402Version : 2,
+        typeof discovered.x402Version === "number" ? discovered.x402Version : 2,
       accepts,
       lastUpdated: new Date().toISOString(),
       ...(description ? { description } : {}),
       ...(mimeType ? { mimeType } : {}),
-      ...(meta.serviceName ? { serviceName: meta.serviceName } : {}),
-      ...(meta.tags ? { tags: meta.tags } : {}),
-      ...(meta.iconUrl ? { iconUrl: meta.iconUrl } : {}),
+      // serviceName / tags / iconUrl arrive already sanitized by the SDK.
+      ...(discovered.serviceName ? { serviceName: discovered.serviceName } : {}),
+      ...(discovered.tags ? { tags: discovered.tags } : {}),
+      ...(discovered.iconUrl ? { iconUrl: discovered.iconUrl } : {}),
       ...(extensions ? { extensions } : {}),
     });
 
@@ -221,18 +240,28 @@ function mergeAccepts(
 }
 
 /**
- * Spec v2 §8.3 only standardizes "http" today; the bazaar extension carries an
- * `input.type` that also allows "mcp", so prefer that when a resource declares it.
+ * Echo back only the bazaar declaration, and only while it stays small. Every
+ * other extension key is irrelevant to discovery, and echoing the whole object
+ * would let one settlement pin an arbitrary slice of the 256 KB request body in
+ * memory — and re-serve it on every paginated response.
  */
-function resourceType(extensions: Record<string, unknown> | undefined): string {
-  const bazaar = extensions?.bazaar;
-  if (!isPlainObject(bazaar)) return "http";
-  const info = bazaar.info;
-  if (!isPlainObject(info)) return "http";
-  const input = info.input;
-  if (!isPlainObject(input)) return "http";
-  const type = input.type;
-  return typeof type === "string" && type.length > 0 ? type : "http";
+function boundedExtensions(
+  raw: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!isPlainObject(raw)) return undefined;
+  const bazaar = raw.bazaar;
+  if (!isPlainObject(bazaar)) return undefined;
+
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(bazaar);
+  } catch {
+    return undefined;
+  }
+  if (!serialized || Buffer.byteLength(serialized, "utf8") > MAX_EXTENSIONS_BYTES) {
+    return undefined;
+  }
+  return { bazaar };
 }
 
 function hasExtension(e: DiscoveredResource, key: string): boolean {
