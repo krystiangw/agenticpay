@@ -9,7 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.112.3",
+    "@anthropic-ai/sdk": "^0.114.0",
     "@x402/core": "^2.19.0",
     "@x402/express": "^2.19.0",
     "@x402/svm": "^2.19.0",
