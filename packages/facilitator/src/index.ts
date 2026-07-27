@@ -53,6 +53,15 @@ const DEVNET_RPC =
 const MAINNET_RPC =
   process.env.SOLANA_MAINNET_RPC ?? "https://api.mainnet-beta.solana.com";
 
+// Empty means "index every settlement"; see the ResourceCatalog construction
+// below for what that does and does not vouch for.
+const DISCOVERY_PAYTO_ALLOWLIST = (
+  process.env.DISCOVERY_PAYTO_ALLOWLIST ?? ""
+)
+  .split(",")
+  .map((a) => a.trim())
+  .filter((a) => a.length > 0);
+
 const SOLANA_DEVNET_CAIP2: Network =
   "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
 const SOLANA_MAINNET_CAIP2: Network =
@@ -133,7 +142,13 @@ async function main() {
   // Bazaar index (x402 spec v2 §8.1). Populated from settled payments below,
   // so it advertises resources someone demonstrably paid for rather than
   // whatever anyone cared to POST at us.
-  const catalog = new ResourceCatalog();
+  //
+  // Settling does not authenticate the resource metadata that rides along with
+  // it — x402 hands the facilitator no signature from the resource server — so
+  // an open index lists whatever payers say about themselves. Set
+  // DISCOVERY_PAYTO_ALLOWLIST to a comma-separated list of payee addresses to
+  // publish only your own resources. See ResourceCatalog.record().
+  const catalog = new ResourceCatalog(DISCOVERY_PAYTO_ALLOWLIST);
 
   app.get("/discovery/resources", readLimiter, (req, res) => {
     res.json(

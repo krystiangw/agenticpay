@@ -81,11 +81,33 @@ const MAX_EXTENSIONS_BYTES = 8 * 1024;
 // the USDC name/version to build a payment — but only while it stays small.
 const MAX_EXTRA_BYTES = 2 * 1024;
 
+// A day. Generous for any real payment window, and finite.
+const MAX_TIMEOUT_SECONDS = 86_400;
+
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 export class ResourceCatalog {
-  private readonly entries = new Map<string, DiscoveredResource>();
+  /**
+   * Entries keyed by resource URL, each tagged with the payTo that first
+   * listed it. See `record()` for why ownership is tracked.
+   */
+  private readonly entries = new Map<
+    string,
+    { owner: string; entry: DiscoveredResource }
+  >();
+
+  /**
+   * When non-empty, only settlements paying one of these addresses are
+   * indexed. x402 gives a facilitator no way to tell a resource server's own
+   * declaration from any payer's (see `record()`), so an operator who needs a
+   * trustworthy index curates it by payee.
+   */
+  private readonly allowedPayTo: ReadonlySet<string>;
+
+  constructor(allowedPayTo: Iterable<string> = []) {
+    this.allowedPayTo = new Set(allowedPayTo);
+  }
 
   /**
    * Record a resource from a settled payment.
@@ -101,6 +123,20 @@ export class ResourceCatalog {
    * disagree with itself: settlement checks the transfer against the former, so
    * publishing the latter would advertise asset/payTo/amount terms that were
    * never actually settled.
+   *
+   * Trust model, stated plainly: settling proves the transfer matched
+   * `requirements`. It proves nothing about `payload.resource` or
+   * `payload.extensions` — the SVM scheme neither binds nor authenticates them,
+   * and x402 gives the facilitator no signature from the resource server to
+   * check. So anyone willing to settle a real payment can list a URL of their
+   * choosing. Two things bound the damage, but neither closes the hole:
+   *
+   *   - a listing belongs to the payTo that created it, so a later settlement
+   *     paying someone else cannot rewrite an existing resource's metadata;
+   *   - an operator can pass an allowlist and index only their own payees.
+   *
+   * Treat an unrestricted index as "resources someone paid for through this
+   * facilitator, as described by the payer" — not as a vouched-for catalog.
    */
   record(
     payload: PaymentPayload | undefined,
@@ -137,8 +173,19 @@ export class ResourceCatalog {
     const resource = normalizeResourceUrl(discovered.resourceUrl);
     if (!resource) return;
 
+    const terms = sanitizeRequirements(requirements);
+    if (!terms) return;
+
+    if (this.allowedPayTo.size > 0 && !this.allowedPayTo.has(terms.payTo)) {
+      return;
+    }
+
+    // First payee to list a resource keeps it. Without this, anyone able to
+    // settle could point an existing listing at their own declaration.
     const existing = this.entries.get(resource);
-    const accepts = mergeAccepts(existing?.accepts, sanitizeRequirements(requirements));
+    if (existing && existing.owner !== terms.payTo) return;
+
+    const accepts = mergeAccepts(existing?.entry.accepts, terms);
 
     const description = boundedText(
       discovered.description,
@@ -152,21 +199,28 @@ export class ResourceCatalog {
     // arbitrary.
     this.entries.delete(resource);
     this.entries.set(resource, {
-      resource,
-      // The SDK discriminates the two resource kinds by shape: an MCP tool
-      // carries toolName, an HTTP endpoint carries method.
-      type: "toolName" in discovered ? "mcp" : "http",
-      x402Version:
-        typeof discovered.x402Version === "number" ? discovered.x402Version : 2,
-      accepts,
-      lastUpdated: new Date().toISOString(),
-      ...(description ? { description } : {}),
-      ...(mimeType ? { mimeType } : {}),
-      // serviceName / tags / iconUrl arrive already sanitized by the SDK.
-      ...(discovered.serviceName ? { serviceName: discovered.serviceName } : {}),
-      ...(discovered.tags ? { tags: discovered.tags } : {}),
-      ...(discovered.iconUrl ? { iconUrl: discovered.iconUrl } : {}),
-      ...(extensions ? { extensions } : {}),
+      owner: terms.payTo,
+      entry: {
+        resource,
+        // The SDK discriminates the two resource kinds by shape: an MCP tool
+        // carries toolName, an HTTP endpoint carries method.
+        type: "toolName" in discovered ? "mcp" : "http",
+        x402Version:
+          typeof discovered.x402Version === "number"
+            ? discovered.x402Version
+            : 2,
+        accepts,
+        lastUpdated: new Date().toISOString(),
+        ...(description ? { description } : {}),
+        ...(mimeType ? { mimeType } : {}),
+        // serviceName / tags / iconUrl arrive already sanitized by the SDK.
+        ...(discovered.serviceName
+          ? { serviceName: discovered.serviceName }
+          : {}),
+        ...(discovered.tags ? { tags: discovered.tags } : {}),
+        ...(discovered.iconUrl ? { iconUrl: discovered.iconUrl } : {}),
+        ...(extensions ? { extensions } : {}),
+      },
     });
 
     while (this.entries.size > MAX_ENTRIES) {
@@ -192,6 +246,7 @@ export class ResourceCatalog {
     // re-inserts on update and eviction drops from the front.
     const matched = [...this.entries.values()]
       .reverse()
+      .map((held) => held.entry)
       .filter((e) => !q.type || e.type === q.type)
       .filter((e) => !q.extensions || hasExtension(e, q.extensions))
       .filter((e) => !q.payTo || acceptsSome(e, "payTo", q.payTo))
@@ -261,27 +316,58 @@ function mergeAccepts(
 }
 
 /**
- * Copy across only the fields discovery actually publishes.
+ * Copy across only the fields discovery publishes, checking each one's runtime
+ * type and size. Returns null if anything looks wrong, which keeps the resource
+ * out of the index entirely.
  *
- * PaymentRequirements arrives straight off the wire and `extra` is a free-form
- * record the scheme never looks at, so a payer can pad it toward the 256 KB
- * body limit. Retaining that verbatim for 20 options across 1000 resources is
- * enough to exhaust the process, so `extra` survives only while it stays small.
+ * Nothing upstream does this for us: PaymentRequirements arrives straight from
+ * JSON, x402Facilitator.settle() does not apply the SDK schema, and the SVM
+ * scheme only looks at the fields it needs — so `maxTimeoutSeconds` could just
+ * as well be a 256 KB string and still ride along on a perfectly good
+ * settlement. `extra` gets the same treatment for the same reason: it is
+ * free-form, the scheme ignores unknown keys, and 20 options across 1000
+ * resources is enough padding to exhaust the process.
  */
-function sanitizeRequirements(r: PaymentRequirements): PaymentRequirements {
-  const snapshot: PaymentRequirements = {
-    scheme: r.scheme,
-    network: r.network,
-    asset: r.asset,
-    amount: r.amount,
-    payTo: r.payTo,
-    maxTimeoutSeconds: r.maxTimeoutSeconds,
-    extra: {},
-  };
-  if (isPlainObject(r.extra) && withinBytes(r.extra, MAX_EXTRA_BYTES)) {
-    snapshot.extra = r.extra;
+function sanitizeRequirements(r: PaymentRequirements): PaymentRequirements | null {
+  const scheme = boundedField(r.scheme, 64);
+  const network = boundedField(r.network, 128);
+  const asset = boundedField(r.asset, 128);
+  const payTo = boundedField(r.payTo, 128);
+  // Base units, so digits only — and short enough that no legitimate amount is
+  // anywhere near the bound.
+  const amount = boundedField(r.amount, 40);
+  if (!scheme || !network || !asset || !payTo || !amount) return null;
+  if (!/^\d+$/.test(amount)) return null;
+
+  const timeout = r.maxTimeoutSeconds;
+  if (
+    typeof timeout !== "number" ||
+    !Number.isInteger(timeout) ||
+    timeout < 0 ||
+    timeout > MAX_TIMEOUT_SECONDS
+  ) {
+    return null;
   }
-  return snapshot;
+
+  return {
+    scheme,
+    network: network as PaymentRequirements["network"],
+    asset,
+    amount,
+    payTo,
+    maxTimeoutSeconds: timeout,
+    extra:
+      isPlainObject(r.extra) && withinBytes(r.extra, MAX_EXTRA_BYTES)
+        ? r.extra
+        : {},
+  };
+}
+
+/** A non-empty string within `max` characters, or undefined. */
+function boundedField(raw: unknown, max: number): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  if (raw.length === 0 || raw.length > max) return undefined;
+  return raw;
 }
 
 /**
