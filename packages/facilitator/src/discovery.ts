@@ -308,9 +308,13 @@ function normalizeResourceUrl(raw: unknown): string | null {
 
 /**
  * A resource can be reachable under several payment options, so keep the ones
- * we already knew about and add this one if it is new. Deduped on the
- * (scheme, network, asset, payTo, amount) tuple — the fields that actually
- * distinguish one way of paying from another.
+ * we already knew about and add this one if it is new.
+ *
+ * Identity is (scheme, network, asset, payTo) — the *way* to pay. `amount` is
+ * deliberately not part of it: two entries differing only in price are not two
+ * options, they are the old price and the current one, and listing both leaves
+ * a client that takes the first match paying a price the resource server will
+ * reject. So a repeat settlement on the same tuple replaces the terms.
  */
 function mergeAccepts(
   existing: PaymentRequirements[] | undefined,
@@ -320,15 +324,15 @@ function mergeAccepts(
   if (!incoming) return merged;
 
   const key = (r: PaymentRequirements) =>
-    [r.scheme, r.network, r.asset, r.payTo, r.amount].join("|");
+    [r.scheme, r.network, r.asset, r.payTo].join("|");
 
   const incomingKey = key(incoming);
   const at = merged.findIndex((r) => key(r) === incomingKey);
   if (at >= 0) merged[at] = incoming;
   else merged.push(incoming);
 
-  // Same bounding rationale as MAX_ENTRIES: one resource must not be able to
-  // grow without limit by varying the amount on every settlement.
+  // Same bounding rationale as MAX_ENTRIES. Genuine options are few — one per
+  // asset/network a resource accepts — so this only ever bites on abuse.
   return merged.slice(-20);
 }
 
