@@ -32,6 +32,9 @@
       "brace-expansion@>=5.0.0 <5.0.8": "^5.0.8",
       "body-parser@>=2.0.0 <2.3.0": "^2.3.0",
       "@hono/node-server@<2.0.5": "2.0.11"
-    }
+    },
+    "neverBuiltDependencies": [
+      "bigint-buffer"
+    ]
   }
 }
