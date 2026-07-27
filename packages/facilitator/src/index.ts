@@ -130,9 +130,9 @@ async function main() {
     res.json(facilitator.getSupported());
   });
 
-  // Bazaar index (x402 spec v2 §8.1). Populated from verified payments below,
-  // so it advertises resources that demonstrably work rather than whatever
-  // anyone cared to POST at us.
+  // Bazaar index (x402 spec v2 §8.1). Populated from settled payments below,
+  // so it advertises resources someone demonstrably paid for rather than
+  // whatever anyone cared to POST at us.
   const catalog = new ResourceCatalog();
 
   app.get("/discovery/resources", readLimiter, (req, res) => {
@@ -207,11 +207,6 @@ async function main() {
         });
       }
       const result = await facilitator.verify(paymentPayload, paymentRequirements);
-      // Index only what actually verified. An invalid payload must not be able
-      // to place an arbitrary URL in our public Bazaar listing.
-      if (result.isValid) {
-        catalog.record(paymentRequirements, paymentPayload?.x402Version);
-      }
       analytics.capture("verify_request", result.payer, {
         ok: result.isValid,
         reason: result.invalidReason,
@@ -272,6 +267,13 @@ async function main() {
         });
       }
       const result = await facilitator.settle(paymentPayload, paymentRequirements);
+      // Index only what actually settled. Verification alone would not do:
+      // verifying does not consume the payment, so a single valid payload could
+      // be replayed to stuff the public index with arbitrary URLs. A settlement
+      // lands on chain, so it cannot be replayed and costs the payer real value.
+      if (result.success) {
+        catalog.record(paymentPayload);
+      }
       analytics.capture("settle_request", result.payer, {
         ok: result.success,
         reason: result.errorReason,

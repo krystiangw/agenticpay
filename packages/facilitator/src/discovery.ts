@@ -3,30 +3,45 @@
  *
  * x402 spec v2 §8 puts the discovery index on the facilitator: resource servers
  * advertise their endpoint spec in the 402 response via the `bazaar` extension,
- * and the facilitator that sees their payments catalogs them so clients can
- * find monetized services. We sit in exactly that position but never recorded
- * anything, so our /discovery/resources was a 404.
+ * and the facilitator that handles their payments catalogs them so clients can
+ * find monetized services. We sit in exactly that position but served nothing,
+ * so our /discovery/resources was a 404.
+ *
+ * The response shape follows `DiscoveryResource` / `DiscoveryResourcesResponse`
+ * from @x402/extensions rather than the prose in spec §8.3, because those two
+ * disagree on `lastUpdated` — the spec text says a Unix number, the SDK type
+ * says an ISO 8601 string. Clients are built against the SDK types, so the SDK
+ * is the contract that actually has to hold.
  *
  * The catalog is deliberately in-memory. A dyno restart empties it and it
  * refills from live traffic — acceptable because every entry is derived from an
- * observed payment anyway, so a persisted index would go stale in the same way.
- * Swap in a store here if the index ever needs to outlive the process.
+ * observed settlement anyway, so a persisted index would go stale in the same
+ * way. Swap in a store behind this class if the index ever needs to outlive the
+ * process.
  */
-import type { Network } from "@x402/core/types";
+import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
+import { sanitizeResourceServiceMetadata } from "@x402/extensions/bazaar";
 
-/** A single catalog entry, shaped per spec v2 §8.3 (Discovered Resource Fields). */
+/** Mirrors `DiscoveryResource` from @x402/extensions. */
 export interface DiscoveredResource {
   resource: string;
   type: string;
   x402Version: number;
-  accepts: Record<string, unknown>[];
-  lastUpdated: number;
+  accepts: PaymentRequirements[];
+  /** ISO 8601, per the SDK type. */
+  lastUpdated: string;
+  description?: string;
+  mimeType?: string;
+  serviceName?: string;
+  tags?: string[];
+  iconUrl?: string;
   extensions?: Record<string, unknown>;
 }
 
-// Every field is spelled `| undefined` because the package builds with
-// exactOptionalPropertyTypes, and the router always passes all seven keys —
-// absent query params arrive as an explicit undefined rather than being omitted.
+/**
+ * Mirrors `ListDiscoveryResourcesParams`, except limit/offset stay `unknown`
+ * because ours arrive as raw query strings and are clamped below.
+ */
 export interface DiscoveryQuery {
   type?: string | undefined;
   payTo?: string | undefined;
@@ -46,6 +61,11 @@ const MAX_ENTRIES = 1000;
 // with megabyte-sized strings.
 const MAX_RESOURCE_URL_LENGTH = 2048;
 
+// `description` and `mimeType` are free text the payer controls and the SDK
+// sanitizer does not cover, so bound them here.
+const MAX_DESCRIPTION_LENGTH = 512;
+const MAX_MIME_TYPE_LENGTH = 128;
+
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
@@ -53,26 +73,42 @@ export class ResourceCatalog {
   private readonly entries = new Map<string, DiscoveredResource>();
 
   /**
-   * Record a resource we just saw a *valid* payment for.
+   * Record a resource from a payment payload.
    *
-   * Only ever call this after a successful verify. The `resource` field is
-   * attacker-controlled, so gating on verification means listing an entry costs
-   * a genuinely signed payment payload rather than an anonymous POST — that is
-   * what keeps this index from becoming an open link farm.
+   * Call this only after a *settlement* succeeds. Verification alone is not
+   * enough: verifying does not consume the payment, so one valid payload could
+   * be replayed indefinitely to stuff the index with arbitrary URLs. Settling
+   * puts the transaction on chain, which cannot be replayed and costs the payer
+   * real value — that is what keeps this public index from becoming a link farm.
+   *
+   * Note the discovery metadata lives on the *payload* (`resource`,
+   * `extensions`), not on PaymentRequirements, whose type carries only the
+   * payment terms.
    */
-  record(
-    paymentRequirements: Record<string, unknown> | undefined,
-    x402Version: unknown
-  ): void {
-    const resource = normalizeResourceUrl(paymentRequirements?.resource);
-    if (!resource) return;
+  record(payload: PaymentPayload | undefined): void {
+    const resource = normalizeResourceUrl(payload?.resource?.url);
+    if (!resource || !payload) return;
 
-    const extensions = isPlainObject(paymentRequirements?.extensions)
-      ? (paymentRequirements.extensions as Record<string, unknown>)
+    const extensions = isPlainObject(payload.extensions)
+      ? payload.extensions
       : undefined;
 
+    // serviceName / tags / iconUrl are attacker-supplied, so run them through
+    // the SDK's own bazaar rules (tag count and charset limits, absolute-http
+    // icon URLs) instead of trusting them. Invalid fields are dropped silently.
+    const meta = sanitizeResourceServiceMetadata(payload.resource ?? undefined);
+
     const existing = this.entries.get(resource);
-    const accepts = mergeAccepts(existing?.accepts, paymentRequirements!);
+    const accepts = mergeAccepts(existing?.accepts, payload.accepted);
+
+    const description = boundedText(
+      payload.resource?.description,
+      MAX_DESCRIPTION_LENGTH
+    );
+    const mimeType = boundedText(
+      payload.resource?.mimeType,
+      MAX_MIME_TYPE_LENGTH
+    );
 
     // Re-inserting moves the key to the end of the Map's iteration order, which
     // is what makes the eviction below least-recently-updated rather than
@@ -81,9 +117,15 @@ export class ResourceCatalog {
     this.entries.set(resource, {
       resource,
       type: resourceType(extensions),
-      x402Version: typeof x402Version === "number" ? x402Version : 2,
+      x402Version:
+        typeof payload.x402Version === "number" ? payload.x402Version : 2,
       accepts,
-      lastUpdated: Math.floor(Date.now() / 1000),
+      lastUpdated: new Date().toISOString(),
+      ...(description ? { description } : {}),
+      ...(mimeType ? { mimeType } : {}),
+      ...(meta.serviceName ? { serviceName: meta.serviceName } : {}),
+      ...(meta.tags ? { tags: meta.tags } : {}),
+      ...(meta.iconUrl ? { iconUrl: meta.iconUrl } : {}),
       ...(extensions ? { extensions } : {}),
     });
 
@@ -94,7 +136,7 @@ export class ResourceCatalog {
     }
   }
 
-  /** Filter + paginate per spec v2 §8.1. */
+  /** Filter + paginate per spec v2 §8.1 / `ListDiscoveryResourcesParams`. */
   query(q: DiscoveryQuery): {
     x402Version: number;
     items: DiscoveredResource[];
@@ -105,10 +147,9 @@ export class ResourceCatalog {
 
     // Newest first, so a client paging through the index sees the most recently
     // active resources before the stale tail. We reverse the Map's own order
-    // rather than sorting on lastUpdated: that field is whole seconds, so every
-    // resource recorded within the same second would tie and the ordering would
-    // collapse. Insertion order is exact, because record() re-inserts on update
-    // and eviction drops from the front.
+    // rather than sorting on lastUpdated: two resources recorded in the same
+    // millisecond tie, and insertion order is exact anyway, because record()
+    // re-inserts on update and eviction drops from the front.
     const matched = [...this.entries.values()]
       .reverse()
       .filter((e) => !q.type || e.type === q.type)
@@ -155,25 +196,27 @@ function normalizeResourceUrl(raw: unknown): string | null {
 
 /**
  * A resource can be reachable under several payment options, so keep the ones
- * we already knew about and add this requirement if it is new. Deduped on the
+ * we already knew about and add this one if it is new. Deduped on the
  * (scheme, network, asset, payTo, amount) tuple — the fields that actually
  * distinguish one way of paying from another.
  */
 function mergeAccepts(
-  existing: Record<string, unknown>[] | undefined,
-  incoming: Record<string, unknown>
-): Record<string, unknown>[] {
-  const key = (r: Record<string, unknown>) =>
+  existing: PaymentRequirements[] | undefined,
+  incoming: PaymentRequirements | undefined
+): PaymentRequirements[] {
+  const merged = existing ? [...existing] : [];
+  if (!incoming) return merged;
+
+  const key = (r: PaymentRequirements) =>
     [r.scheme, r.network, r.asset, r.payTo, r.amount].join("|");
 
-  const merged = existing ? [...existing] : [];
   const incomingKey = key(incoming);
   const at = merged.findIndex((r) => key(r) === incomingKey);
   if (at >= 0) merged[at] = incoming;
   else merged.push(incoming);
 
   // Same bounding rationale as MAX_ENTRIES: one resource must not be able to
-  // grow without limit by varying the amount on every request.
+  // grow without limit by varying the amount on every settlement.
   return merged.slice(-20);
 }
 
@@ -184,11 +227,11 @@ function mergeAccepts(
 function resourceType(extensions: Record<string, unknown> | undefined): string {
   const bazaar = extensions?.bazaar;
   if (!isPlainObject(bazaar)) return "http";
-  const info = (bazaar as Record<string, unknown>).info;
+  const info = bazaar.info;
   if (!isPlainObject(info)) return "http";
-  const input = (info as Record<string, unknown>).input;
+  const input = info.input;
   if (!isPlainObject(input)) return "http";
-  const type = (input as Record<string, unknown>).type;
+  const type = input.type;
   return typeof type === "string" && type.length > 0 ? type : "http";
 }
 
@@ -198,10 +241,18 @@ function hasExtension(e: DiscoveredResource, key: string): boolean {
 
 function acceptsSome(
   e: DiscoveredResource,
-  field: string,
+  field: keyof PaymentRequirements,
   value: string
 ): boolean {
   return e.accepts.some((a) => a[field] === value);
+}
+
+/** Trim free-text metadata to a sane length, or drop it entirely. */
+function boundedText(raw: unknown, max: number): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return undefined;
+  return trimmed.slice(0, max);
 }
 
 /** Query strings arrive as text, so parse defensively and fall back to the default. */
@@ -223,6 +274,3 @@ function clampInt(
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-
-/** Re-exported so index.ts can keep its network typing consistent. */
-export type { Network };
