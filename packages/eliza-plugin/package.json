@@ -50,9 +50,9 @@
   },
   "dependencies": {
     "@solana/kit": "^7.0.0",
-    "@x402/core": "^2.18.0",
-    "@x402/fetch": "^2.18.0",
-    "@x402/svm": "^2.18.0"
+    "@x402/core": "^2.19.0",
+    "@x402/fetch": "^2.19.0",
+    "@x402/svm": "^2.19.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1"
