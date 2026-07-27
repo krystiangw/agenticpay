@@ -98,15 +98,25 @@ export class ResourceCatalog {
   >();
 
   /**
-   * When non-empty, only settlements paying one of these addresses are
-   * indexed. x402 gives a facilitator no way to tell a resource server's own
-   * declaration from any payer's (see `record()`), so an operator who needs a
-   * trustworthy index curates it by payee.
+   * Origins whose resources this facilitator will publish, declared by the
+   * operator. Empty means publish nothing; the single entry "*" means publish
+   * anything. See `record()` for why the default is closed.
    */
-  private readonly allowedPayTo: ReadonlySet<string>;
+  private readonly allowedOrigins: ReadonlySet<string>;
 
-  constructor(allowedPayTo: Iterable<string> = []) {
-    this.allowedPayTo = new Set(allowedPayTo);
+  constructor(allowedOrigins: Iterable<string> = []) {
+    this.allowedOrigins = new Set(allowedOrigins);
+  }
+
+  /** True when the operator has opted this facilitator into publishing at all. */
+  private publishes(resourceUrl: string): boolean {
+    if (this.allowedOrigins.size === 0) return false;
+    if (this.allowedOrigins.has("*")) return true;
+    try {
+      return this.allowedOrigins.has(new URL(resourceUrl).origin);
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -125,18 +135,29 @@ export class ResourceCatalog {
    * never actually settled.
    *
    * Trust model, stated plainly: settling proves the transfer matched
-   * `requirements`. It proves nothing about `payload.resource` or
+   * `requirements`. It proves nothing whatsoever about `payload.resource` or
    * `payload.extensions` — the SVM scheme neither binds nor authenticates them,
-   * and x402 gives the facilitator no signature from the resource server to
-   * check. So anyone willing to settle a real payment can list a URL of their
-   * choosing. Two things bound the damage, but neither closes the hole:
+   * and x402 hands the facilitator no signature from the resource server to
+   * check. Anyone who can settle can therefore claim any URL.
    *
-   *   - a listing belongs to the payTo that created it, so a later settlement
-   *     paying someone else cannot rewrite an existing resource's metadata;
-   *   - an operator can pass an allowlist and index only their own payees.
+   * It is tempting to argue that settling costs enough to deter that. It does
+   * not. An attacker settles between two token accounts they own, so the tokens
+   * never leave their control, and *this facilitator* pays the SOL fee as the
+   * fee payer. Poisoning the index is close to free for them and costs us. A
+   * payee allowlist does not fix it either: payees are public addresses, so
+   * anyone can send the minimum to one and then attach whatever metadata they
+   * like.
    *
-   * Treat an unrestricted index as "resources someone paid for through this
-   * facilitator, as described by the payer" — not as a vouched-for catalog.
+   * So the index is not derived from trust in payers at all. The operator
+   * declares which origins this facilitator publishes, and a settlement only
+   * ever refreshes the live terms of a resource that was already sanctioned.
+   * With nothing declared we publish nothing, which is why the endpoint answers
+   * with an empty, valid response until it is configured.
+   *
+   * Residual, and worth knowing: within a declared origin a payer can still
+   * name a path that is not a real endpoint. That pollutes only the operator's
+   * own namespace, which is a different order of problem from an open index.
+   * Ownership by payTo below limits it further.
    */
   record(
     payload: PaymentPayload | undefined,
@@ -184,13 +205,10 @@ export class ResourceCatalog {
 
     const resource = normalizeResourceUrl(discovered.resourceUrl);
     if (!resource) return;
+    if (!this.publishes(resource)) return;
 
     const terms = sanitizeRequirements(requirements);
     if (!terms) return;
-
-    if (this.allowedPayTo.size > 0 && !this.allowedPayTo.has(terms.payTo)) {
-      return;
-    }
 
     // First payee to list a resource keeps it. Without this, anyone able to
     // settle could point an existing listing at their own declaration.

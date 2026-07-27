@@ -53,14 +53,16 @@ const DEVNET_RPC =
 const MAINNET_RPC =
   process.env.SOLANA_MAINNET_RPC ?? "https://api.mainnet-beta.solana.com";
 
-// Empty means "index every settlement"; see the ResourceCatalog construction
-// below for what that does and does not vouch for.
-const DISCOVERY_PAYTO_ALLOWLIST = (
-  process.env.DISCOVERY_PAYTO_ALLOWLIST ?? ""
+// Origins this facilitator is willing to publish in its Bazaar index, e.g.
+// "https://api.example.com,https://tools.example.com". Empty publishes nothing;
+// "*" publishes every settled resource and is only safe if you accept that
+// anyone who can settle can list anything. See ResourceCatalog.record().
+const DISCOVERY_RESOURCE_ORIGINS = (
+  process.env.DISCOVERY_RESOURCE_ORIGINS ?? ""
 )
   .split(",")
-  .map((a) => a.trim())
-  .filter((a) => a.length > 0);
+  .map((o) => o.trim())
+  .filter((o) => o.length > 0);
 
 const SOLANA_DEVNET_CAIP2: Network =
   "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
@@ -139,16 +141,14 @@ async function main() {
     res.json(facilitator.getSupported());
   });
 
-  // Bazaar index (x402 spec v2 §8.1). Populated from settled payments below,
-  // so it advertises resources someone demonstrably paid for rather than
-  // whatever anyone cared to POST at us.
+  // Bazaar index (x402 spec v2 §8.1), refreshed from the settlements below.
   //
-  // Settling does not authenticate the resource metadata that rides along with
-  // it — x402 hands the facilitator no signature from the resource server — so
-  // an open index lists whatever payers say about themselves. Set
-  // DISCOVERY_PAYTO_ALLOWLIST to a comma-separated list of payee addresses to
-  // publish only your own resources. See ResourceCatalog.record().
-  const catalog = new ResourceCatalog(DISCOVERY_PAYTO_ALLOWLIST);
+  // Settling authenticates the transfer, never the resource metadata riding
+  // with it, so who may be listed is the operator's call and not a payer's:
+  // set DISCOVERY_RESOURCE_ORIGINS to the origins you host. Unset publishes
+  // nothing, and the endpoint answers with a valid empty index. See
+  // ResourceCatalog.record() for the full trust model.
+  const catalog = new ResourceCatalog(DISCOVERY_RESOURCE_ORIGINS);
 
   app.get("/discovery/resources", readLimiter, (req, res) => {
     res.json(
