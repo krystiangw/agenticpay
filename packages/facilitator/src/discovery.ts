@@ -20,7 +20,10 @@
  * process.
  */
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
-import { extractDiscoveryInfo } from "@x402/extensions/bazaar";
+import {
+  extractDiscoveryInfo,
+  validateDiscoveryExtensionSpec,
+} from "@x402/extensions/bazaar";
 
 /** Mirrors `DiscoveryResource` from @x402/extensions. */
 export interface DiscoveredResource {
@@ -68,9 +71,15 @@ const MAX_MIME_TYPE_LENGTH = 128;
 
 // The extension echo is attacker-controlled and the body parser admits 256 KB,
 // so retaining it verbatim would let 1000 entries pin ~256 MB — more than the
-// dyno has. Keep only the bazaar declaration, and only when it serializes
-// small enough to be worth echoing.
+// dyno has. Echo the whole extensions object only while it stays under this
+// aggregate bound, so `?extensions=<key>` keeps working for keys other than
+// bazaar.
 const MAX_EXTENSIONS_BYTES = 8 * 1024;
+
+// PaymentRequirements.extra is a free-form record the scheme ignores, so a
+// payer can pad it toward the body limit. We keep it — clients need things like
+// the USDC name/version to build a payment — but only while it stays small.
+const MAX_EXTRA_BYTES = 2 * 1024;
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -99,12 +108,24 @@ export class ResourceCatalog {
   ): void {
     if (!payload || !requirements) return;
 
-    // The bazaar extension is the resource server's opt-in to being listed, and
-    // it is what carries the invocation metadata that makes an entry useful.
-    // extractDiscoveryInfo validates the declaration against its own schema and
-    // yields null when there isn't a usable one, so a plain payment — or a
-    // malformed declaration — is simply not indexed. It throws on validation
-    // failure, hence the guard.
+    // The bazaar extension is the resource server's opt-in to being listed and
+    // carries the invocation metadata that makes an entry useful, so a plain
+    // payment is never indexed.
+    //
+    // Two validation steps, because they check different things and only one of
+    // them is trustworthy on its own. extractDiscoveryInfo checks `info`
+    // against the `schema` sitting next to it — but the payer authors both, so
+    // a declaration shipping a permissive schema validates against itself and
+    // proves nothing. validateDiscoveryExtensionSpec enforces the fixed
+    // protocol invariants instead (input.type is http or mcp, HTTP methods are
+    // real methods, MCP declares toolName and inputSchema), which is what stops
+    // us cataloging a self-consistent but malformed resource.
+    const declaration = isPlainObject(payload.extensions)
+      ? payload.extensions.bazaar
+      : undefined;
+    if (!isPlainObject(declaration)) return;
+    if (!validateDiscoveryExtensionSpec(declaration).valid) return;
+
     let discovered;
     try {
       discovered = extractDiscoveryInfo(payload, requirements);
@@ -117,7 +138,7 @@ export class ResourceCatalog {
     if (!resource) return;
 
     const existing = this.entries.get(resource);
-    const accepts = mergeAccepts(existing?.accepts, requirements);
+    const accepts = mergeAccepts(existing?.accepts, sanitizeRequirements(requirements));
 
     const description = boundedText(
       discovered.description,
@@ -240,28 +261,63 @@ function mergeAccepts(
 }
 
 /**
- * Echo back only the bazaar declaration, and only while it stays small. Every
- * other extension key is irrelevant to discovery, and echoing the whole object
- * would let one settlement pin an arbitrary slice of the 256 KB request body in
- * memory — and re-serve it on every paginated response.
+ * Copy across only the fields discovery actually publishes.
+ *
+ * PaymentRequirements arrives straight off the wire and `extra` is a free-form
+ * record the scheme never looks at, so a payer can pad it toward the 256 KB
+ * body limit. Retaining that verbatim for 20 options across 1000 resources is
+ * enough to exhaust the process, so `extra` survives only while it stays small.
+ */
+function sanitizeRequirements(r: PaymentRequirements): PaymentRequirements {
+  const snapshot: PaymentRequirements = {
+    scheme: r.scheme,
+    network: r.network,
+    asset: r.asset,
+    amount: r.amount,
+    payTo: r.payTo,
+    maxTimeoutSeconds: r.maxTimeoutSeconds,
+    extra: {},
+  };
+  if (isPlainObject(r.extra) && withinBytes(r.extra, MAX_EXTRA_BYTES)) {
+    snapshot.extra = r.extra;
+  }
+  return snapshot;
+}
+
+/**
+ * Echo the extensions object back, but bounded.
+ *
+ * Every key is kept, not just `bazaar`: the endpoint advertises the SDK's
+ * `?extensions=<key>` filter, so dropping the other keys would silently make
+ * that filter unable to match anything else. The aggregate size bound is what
+ * keeps one settlement from pinning an arbitrary slice of the request body in
+ * memory and re-serving it on every paginated response.
  */
 function boundedExtensions(
   raw: Record<string, unknown> | undefined
 ): Record<string, unknown> | undefined {
   if (!isPlainObject(raw)) return undefined;
-  const bazaar = raw.bazaar;
-  if (!isPlainObject(bazaar)) return undefined;
+  if (withinBytes(raw, MAX_EXTENSIONS_BYTES)) return raw;
 
-  let serialized: string;
+  // Too big as a whole: fall back to the declaration that earned the listing,
+  // if that alone fits. Otherwise echo nothing — the resource stays indexed.
+  const bazaar = raw.bazaar;
+  if (isPlainObject(bazaar) && withinBytes({ bazaar }, MAX_EXTENSIONS_BYTES)) {
+    return { bazaar };
+  }
+  return undefined;
+}
+
+/** True when the value serializes to JSON within `max` bytes. */
+function withinBytes(value: unknown, max: number): boolean {
+  let serialized: string | undefined;
   try {
-    serialized = JSON.stringify(bazaar);
+    serialized = JSON.stringify(value);
   } catch {
-    return undefined;
+    return false;
   }
-  if (!serialized || Buffer.byteLength(serialized, "utf8") > MAX_EXTENSIONS_BYTES) {
-    return undefined;
-  }
-  return { bazaar };
+  if (serialized === undefined) return false;
+  return Buffer.byteLength(serialized, "utf8") <= max;
 }
 
 function hasExtension(e: DiscoveredResource, key: string): boolean {
