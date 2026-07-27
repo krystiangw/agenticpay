@@ -2,9 +2,10 @@
  * agenticpay self-hosted x402 facilitator.
  *
  * Express server exposing the standard x402 facilitator endpoints:
- *   GET  /supported  → list of (scheme, network) pairs we can verify and settle
- *   POST /verify     → verify a signed payment payload (no on-chain submit)
- *   POST /settle     → submit the signed payload on-chain and confirm
+ *   GET  /supported            → list of (scheme, network) pairs we verify and settle
+ *   POST /verify               → verify a signed payment payload (no on-chain submit)
+ *   POST /settle               → submit the signed payload on-chain and confirm
+ *   GET  /discovery/resources  → Bazaar index of resources we've seen paid for
  *
  * Backed by @x402/core/facilitator + @x402/svm/exact/facilitator. Our own
  * keypair (./wallets/facilitator.json by default) is the fee_payer for every
@@ -26,6 +27,7 @@ import { ExactSvmScheme } from "@x402/svm/exact/facilitator";
 import { toFacilitatorSvmSigner } from "@x402/svm";
 import { loadOrCreateFacilitatorSigner } from "./keypair.js";
 import { analytics } from "./analytics.js";
+import { ResourceCatalog } from "./discovery.js";
 
 // Lower bound on payment amounts we'll accept. 100 base units of USDC is
 // $0.0001 — anything less is almost certainly spam, since the SOL fee paid
@@ -128,6 +130,35 @@ async function main() {
     res.json(facilitator.getSupported());
   });
 
+  // Bazaar index (x402 spec v2 §8.1). Populated from verified payments below,
+  // so it advertises resources that demonstrably work rather than whatever
+  // anyone cared to POST at us.
+  const catalog = new ResourceCatalog();
+
+  app.get("/discovery/resources", readLimiter, (req, res) => {
+    res.json(
+      catalog.query({
+        type: asQueryString(req.query.type),
+        payTo: asQueryString(req.query.payTo),
+        scheme: asQueryString(req.query.scheme),
+        network: asQueryString(req.query.network),
+        extensions: asQueryString(req.query.extensions),
+        limit: asQueryString(req.query.limit),
+        offset: asQueryString(req.query.offset),
+      })
+    );
+  });
+
+  // Express hands back string | string[] | object for a query param depending
+  // on how the client spelled it (`?a=1&a=2` yields an array). Collapse to the
+  // first plain string so a repeated or nested param degrades to a normal
+  // filter instead of reaching the catalog as an object.
+  function asQueryString(raw: unknown): string | undefined {
+    if (typeof raw === "string") return raw;
+    if (Array.isArray(raw) && typeof raw[0] === "string") return raw[0];
+    return undefined;
+  }
+
   // Reject obvious dust amounts before they reach the facilitator — we'd
   // otherwise burn SOL fees on transfers worth less than the fee.
   function checkMinAmount(
@@ -176,6 +207,11 @@ async function main() {
         });
       }
       const result = await facilitator.verify(paymentPayload, paymentRequirements);
+      // Index only what actually verified. An invalid payload must not be able
+      // to place an arbitrary URL in our public Bazaar listing.
+      if (result.isValid) {
+        catalog.record(paymentRequirements, paymentPayload?.x402Version);
+      }
       analytics.capture("verify_request", result.payer, {
         ok: result.isValid,
         reason: result.invalidReason,
@@ -271,12 +307,18 @@ async function main() {
       feePayer: signer.address,
       networks: supported.kinds.map((k) => k.network),
       kinds: supported.kinds,
+      // Advertise the Bazaar index here: the root document is the only thing a
+      // client can fetch without knowing our routes, so discovery has to be
+      // reachable from it.
+      discovery: { resources: "/discovery/resources" },
     });
   });
 
   app.listen(PORT, () => {
     console.log(`agenticpay facilitator listening on http://localhost:${PORT}`);
-    console.log(`endpoints: GET / | GET /supported | POST /verify | POST /settle`);
+    console.log(
+      `endpoints: GET / | GET /supported | POST /verify | POST /settle | GET /discovery/resources`
+    );
     console.log("---");
     console.log(
       "Before serving real settlements, fund the fee payer with SOL on each network."
