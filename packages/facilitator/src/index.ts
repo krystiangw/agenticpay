@@ -69,17 +69,28 @@ const DISCOVERY_RESOURCES: [string, string][] = (
   .map((pair) => pair.trim())
   .filter((pair) => pair.length > 0)
   .flatMap((pair) => {
+    const skip = (why: string) => {
+      console.warn(`[discovery] ignoring DISCOVERY_RESOURCES entry (${why}): ${pair}`);
+      return [];
+    };
     const at = pair.lastIndexOf("=");
-    if (at <= 0) {
-      console.warn(`[discovery] ignoring malformed DISCOVERY_RESOURCES entry: ${pair}`);
-      return [];
-    }
-    const origin = pair.slice(0, at).trim();
+    if (at <= 0) return skip("expected origin=payee");
+    const rawOrigin = pair.slice(0, at).trim();
     const payee = pair.slice(at + 1).trim();
-    if (!origin || !payee) {
-      console.warn(`[discovery] ignoring malformed DISCOVERY_RESOURCES entry: ${pair}`);
-      return [];
+    if (!rawOrigin || !payee) return skip("expected origin=payee");
+    if (rawOrigin === "*") return [["*", payee] as [string, string]];
+
+    // Match against the same canonical form URL parsing produces, so that
+    // "https://api.example.com/", "HTTPS://API.EXAMPLE.COM" and an explicit
+    // ":443" all configure the origin the operator meant, instead of silently
+    // matching nothing and leaving the index mysteriously empty.
+    let origin: string;
+    try {
+      origin = new URL(rawOrigin).origin;
+    } catch {
+      return skip("not a URL");
     }
+    if (origin === "null") return skip("not an http(s) origin");
     return [[origin, payee] as [string, string]];
   });
 

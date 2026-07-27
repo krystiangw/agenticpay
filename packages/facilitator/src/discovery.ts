@@ -162,10 +162,21 @@ export class ResourceCatalog {
    * pay the attacker. Gating on payee alone would let them attach any URL to a
    * minimum payment sent to a declared, public address.
    *
-   * Residual: someone paying the declared payee can name a path under that
-   * origin which is not a real endpoint. They are paying the operator to do it
-   * and the advertised terms still point at the operator, so this is namespace
-   * clutter rather than misdirected money.
+   * What remains, and it is not small: once an operator opts an origin in,
+   * anyone who pays that origin's declared payee — the minimum will do — gets
+   * to write what we publish about a URL under it. They cannot redirect the
+   * money, since the payee is fixed by config, but they can name a path that is
+   * not a real endpoint, and they can overwrite a real endpoint's published
+   * price or add a worthless asset, so clients build payments the resource
+   * server then rejects.
+   *
+   * This cannot be closed here. x402 gives a facilitator no
+   * resource-server-authenticated declaration to check against, so no amount of
+   * inspecting the payment tells us whether the terms riding with it are the
+   * ones the resource server actually publishes. Which is why the default is
+   * closed and enabling it is a deliberate act: treat an opted-in index as an
+   * operator's own bulletin board on a network they trust, not as something to
+   * expose to arbitrary payers.
    */
   record(
     payload: PaymentPayload | undefined,
