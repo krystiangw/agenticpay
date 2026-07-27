@@ -289,7 +289,15 @@ async function main() {
       // Pass the requirements settlement validated against, not the payload's
       // own copy, so we only ever advertise terms that were really settled.
       if (result.success) {
-        catalog.record(paymentPayload, paymentRequirements);
+        // Cataloging is a side effect of a payment that has already landed on
+        // chain. If anything in it throws we must still report the settlement
+        // as the success it was: a 500 here would tell the payer their money
+        // never moved and invite them to pay a second time.
+        try {
+          catalog.record(paymentPayload, paymentRequirements);
+        } catch (err) {
+          console.warn("[discovery] catalog skipped:", (err as Error).message);
+        }
       }
       analytics.capture("settle_request", result.payer, {
         ok: result.success,

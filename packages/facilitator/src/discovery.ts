@@ -160,10 +160,15 @@ export class ResourceCatalog {
       ? payload.extensions.bazaar
       : undefined;
     if (!isPlainObject(declaration)) return;
-    if (!validateDiscoveryExtensionSpec(declaration).valid) return;
 
+    // Both calls are inside the guard: the declaration is untrusted, and the
+    // SDK validator throws rather than returning invalid on values it cannot
+    // even format into an error message (an `input.type` of `{toString: 1}`
+    // raises a TypeError). The caller wraps this too, but a payment path must
+    // not depend on a single layer of that.
     let discovered;
     try {
+      if (!validateDiscoveryExtensionSpec(declaration).valid) return;
       discovered = extractDiscoveryInfo(payload, requirements);
     } catch {
       return;
@@ -175,8 +180,7 @@ export class ResourceCatalog {
     // server mid-setup, useless in a catalog, since a client has no way to
     // invoke an endpoint whose method it doesn't know. MCP resources need no
     // equivalent check: the validator already requires toolName there.
-    if (!("toolName" in discovered) && !isInvocableHttpMethod(discovered.method))
-      return;
+    if (!("toolName" in discovered) && !isInvocableHttp(discovered)) return;
 
     const resource = normalizeResourceUrl(discovered.resourceUrl);
     if (!resource) return;
@@ -395,8 +399,29 @@ const INVOCABLE_HTTP_METHODS = new Set([
   "PATCH",
 ]);
 
-function isInvocableHttpMethod(raw: unknown): boolean {
-  return typeof raw === "string" && INVOCABLE_HTTP_METHODS.has(raw);
+/** Methods whose declaration has to describe a request body to be usable. */
+const BODY_HTTP_METHODS = new Set(["POST", "PUT", "PATCH"]);
+
+const BODY_TYPES = new Set(["json", "form-data", "text"]);
+
+/**
+ * Whether an HTTP declaration tells a client enough to actually call it.
+ *
+ * The SDK's spec validator checks `bodyType` only when it is present, so a
+ * POST declaration omitting it validates cleanly and would otherwise be
+ * published with no way to describe the request body.
+ */
+function isInvocableHttp(discovered: { method?: string | undefined }): boolean {
+  const method = discovered.method;
+  if (typeof method !== "string" || !INVOCABLE_HTTP_METHODS.has(method)) {
+    return false;
+  }
+  if (!BODY_HTTP_METHODS.has(method)) return true;
+
+  const input = (discovered as { discoveryInfo?: { input?: unknown } })
+    .discoveryInfo?.input;
+  if (!isPlainObject(input)) return false;
+  return typeof input.bodyType === "string" && BODY_TYPES.has(input.bodyType);
 }
 
 /** A non-empty string within `max` characters, or undefined. */
