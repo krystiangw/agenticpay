@@ -170,6 +170,14 @@ export class ResourceCatalog {
     }
     if (!discovered) return;
 
+    // The spec validator is documented as safe for pre-enrichment declarations,
+    // where an HTTP `method` may legitimately be absent — fine for a resource
+    // server mid-setup, useless in a catalog, since a client has no way to
+    // invoke an endpoint whose method it doesn't know. MCP resources need no
+    // equivalent check: the validator already requires toolName there.
+    if (!("toolName" in discovered) && !isInvocableHttpMethod(discovered.method))
+      return;
+
     const resource = normalizeResourceUrl(discovered.resourceUrl);
     if (!resource) return;
 
@@ -192,7 +200,12 @@ export class ResourceCatalog {
       MAX_DESCRIPTION_LENGTH
     );
     const mimeType = boundedText(discovered.mimeType, MAX_MIME_TYPE_LENGTH);
+
+    // null means the declaration itself blew the bound. Everything a client
+    // needs to invoke the resource lives in that echo, so an entry without it
+    // would be undiscoverable in practice — skip rather than publish a stub.
     const extensions = boundedExtensions(discovered.extensions);
+    if (extensions === null) return;
 
     // Re-inserting moves the key to the end of the Map's iteration order, which
     // is what makes the eviction below least-recently-updated rather than
@@ -202,8 +215,8 @@ export class ResourceCatalog {
       owner: terms.payTo,
       entry: {
         resource,
-        // The SDK discriminates the two resource kinds by shape: an MCP tool
-        // carries toolName, an HTTP endpoint carries method.
+        // The SDK discriminates the two kinds by shape: an MCP tool carries
+        // toolName, an HTTP endpoint carries method.
         type: "toolName" in discovered ? "mcp" : "http",
         x402Version:
           typeof discovered.x402Version === "number"
@@ -372,6 +385,20 @@ function sanitizeRequirements(r: PaymentRequirements): PaymentRequirements | nul
   };
 }
 
+/** The methods a discovery client can actually issue, per the bazaar spec. */
+const INVOCABLE_HTTP_METHODS = new Set([
+  "GET",
+  "HEAD",
+  "DELETE",
+  "POST",
+  "PUT",
+  "PATCH",
+]);
+
+function isInvocableHttpMethod(raw: unknown): boolean {
+  return typeof raw === "string" && INVOCABLE_HTTP_METHODS.has(raw);
+}
+
 /** A non-empty string within `max` characters, or undefined. */
 function boundedField(raw: unknown, max: number): string | undefined {
   if (typeof raw !== "string") return undefined;
@@ -390,17 +417,19 @@ function boundedField(raw: unknown, max: number): string | undefined {
  */
 function boundedExtensions(
   raw: Record<string, unknown> | undefined
-): Record<string, unknown> | undefined {
-  if (!isPlainObject(raw)) return undefined;
+): Record<string, unknown> | null {
+  if (!isPlainObject(raw)) return null;
   if (withinBytes(raw, MAX_EXTENSIONS_BYTES)) return raw;
 
-  // Too big as a whole: fall back to the declaration that earned the listing,
-  // if that alone fits. Otherwise echo nothing — the resource stays indexed.
+  // Too big as a whole: keep the declaration that earned the listing, if that
+  // alone fits. The other keys are lost — `?extensions=<key>` will no longer
+  // match them — which is the payer's doing for oversizing them.
   const bazaar = raw.bazaar;
   if (isPlainObject(bazaar) && withinBytes({ bazaar }, MAX_EXTENSIONS_BYTES)) {
     return { bazaar };
   }
-  return undefined;
+  // Even the declaration alone is oversized; the caller drops the record.
+  return null;
 }
 
 /** True when the value serializes to JSON within `max` bytes. */
