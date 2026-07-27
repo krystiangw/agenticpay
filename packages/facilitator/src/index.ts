@@ -2,9 +2,10 @@
  * agenticpay self-hosted x402 facilitator.
  *
  * Express server exposing the standard x402 facilitator endpoints:
- *   GET  /supported  → list of (scheme, network) pairs we can verify and settle
- *   POST /verify     → verify a signed payment payload (no on-chain submit)
- *   POST /settle     → submit the signed payload on-chain and confirm
+ *   GET  /supported            → list of (scheme, network) pairs we verify and settle
+ *   POST /verify               → verify a signed payment payload (no on-chain submit)
+ *   POST /settle               → submit the signed payload on-chain and confirm
+ *   GET  /discovery/resources  → Bazaar index of resources we've seen paid for
  *
  * Backed by @x402/core/facilitator + @x402/svm/exact/facilitator. Our own
  * keypair (./wallets/facilitator.json by default) is the fee_payer for every
@@ -26,6 +27,7 @@ import { ExactSvmScheme } from "@x402/svm/exact/facilitator";
 import { toFacilitatorSvmSigner } from "@x402/svm";
 import { loadOrCreateFacilitatorSigner } from "./keypair.js";
 import { analytics } from "./analytics.js";
+import { ResourceCatalog } from "./discovery.js";
 
 // Lower bound on payment amounts we'll accept. 100 base units of USDC is
 // $0.0001 — anything less is almost certainly spam, since the SOL fee paid
@@ -50,6 +52,47 @@ const DEVNET_RPC =
   process.env.SOLANA_DEVNET_RPC ?? "https://api.devnet.solana.com";
 const MAINNET_RPC =
   process.env.SOLANA_MAINNET_RPC ?? "https://api.mainnet-beta.solana.com";
+
+// Which resources this facilitator publishes in its Bazaar index, as
+// `origin=payee` pairs:
+//
+//   DISCOVERY_RESOURCES=https://api.example.com=PayeeAddr,https://tools.example.com=OtherAddr
+//
+// A resource is listed only when its origin appears here *and* the settlement
+// paid that origin's declared payee. Unset publishes nothing. An origin of "*"
+// matches any origin, still only for its declared payee. See
+// ResourceCatalog.record() for why both halves are required.
+const DISCOVERY_RESOURCES: [string, string][] = (
+  process.env.DISCOVERY_RESOURCES ?? ""
+)
+  .split(",")
+  .map((pair) => pair.trim())
+  .filter((pair) => pair.length > 0)
+  .flatMap((pair) => {
+    const skip = (why: string) => {
+      console.warn(`[discovery] ignoring DISCOVERY_RESOURCES entry (${why}): ${pair}`);
+      return [];
+    };
+    const at = pair.lastIndexOf("=");
+    if (at <= 0) return skip("expected origin=payee");
+    const rawOrigin = pair.slice(0, at).trim();
+    const payee = pair.slice(at + 1).trim();
+    if (!rawOrigin || !payee) return skip("expected origin=payee");
+    if (rawOrigin === "*") return [["*", payee] as [string, string]];
+
+    // Match against the same canonical form URL parsing produces, so that
+    // "https://api.example.com/", "HTTPS://API.EXAMPLE.COM" and an explicit
+    // ":443" all configure the origin the operator meant, instead of silently
+    // matching nothing and leaving the index mysteriously empty.
+    let origin: string;
+    try {
+      origin = new URL(rawOrigin).origin;
+    } catch {
+      return skip("not a URL");
+    }
+    if (origin === "null") return skip("not an http(s) origin");
+    return [[origin, payee] as [string, string]];
+  });
 
 const SOLANA_DEVNET_CAIP2: Network =
   "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
@@ -127,6 +170,39 @@ async function main() {
   app.get("/supported", readLimiter, (_req, res) => {
     res.json(facilitator.getSupported());
   });
+
+  // Bazaar index (x402 spec v2 §8.1), refreshed from the settlements below.
+  //
+  // Settling authenticates the transfer, never the resource metadata riding
+  // with it, so who may be listed is the operator's call and not a payer's:
+  // set DISCOVERY_RESOURCES to the origin=payee pairs you host. Unset publishes
+  // nothing, and the endpoint answers with a valid empty index. See
+  // ResourceCatalog.record() for the full trust model.
+  const catalog = new ResourceCatalog(DISCOVERY_RESOURCES);
+
+  app.get("/discovery/resources", readLimiter, (req, res) => {
+    res.json(
+      catalog.query({
+        type: asQueryString(req.query.type),
+        payTo: asQueryString(req.query.payTo),
+        scheme: asQueryString(req.query.scheme),
+        network: asQueryString(req.query.network),
+        extensions: asQueryString(req.query.extensions),
+        limit: asQueryString(req.query.limit),
+        offset: asQueryString(req.query.offset),
+      })
+    );
+  });
+
+  // Express hands back string | string[] | object for a query param depending
+  // on how the client spelled it (`?a=1&a=2` yields an array). Collapse to the
+  // first plain string so a repeated or nested param degrades to a normal
+  // filter instead of reaching the catalog as an object.
+  function asQueryString(raw: unknown): string | undefined {
+    if (typeof raw === "string") return raw;
+    if (Array.isArray(raw) && typeof raw[0] === "string") return raw[0];
+    return undefined;
+  }
 
   // Reject obvious dust amounts before they reach the facilitator — we'd
   // otherwise burn SOL fees on transfers worth less than the fee.
@@ -236,6 +312,23 @@ async function main() {
         });
       }
       const result = await facilitator.settle(paymentPayload, paymentRequirements);
+      // Index only what actually settled. Verification alone would not do:
+      // verifying does not consume the payment, so a single valid payload could
+      // be replayed to stuff the public index with arbitrary URLs. A settlement
+      // lands on chain, so it cannot be replayed and costs the payer real value.
+      // Pass the requirements settlement validated against, not the payload's
+      // own copy, so we only ever advertise terms that were really settled.
+      if (result.success) {
+        // Cataloging is a side effect of a payment that has already landed on
+        // chain. If anything in it throws we must still report the settlement
+        // as the success it was: a 500 here would tell the payer their money
+        // never moved and invite them to pay a second time.
+        try {
+          catalog.record(paymentPayload, paymentRequirements);
+        } catch (err) {
+          console.warn("[discovery] catalog skipped:", (err as Error).message);
+        }
+      }
       analytics.capture("settle_request", result.payer, {
         ok: result.success,
         reason: result.errorReason,
@@ -271,12 +364,18 @@ async function main() {
       feePayer: signer.address,
       networks: supported.kinds.map((k) => k.network),
       kinds: supported.kinds,
+      // Advertise the Bazaar index here: the root document is the only thing a
+      // client can fetch without knowing our routes, so discovery has to be
+      // reachable from it.
+      discovery: { resources: "/discovery/resources" },
     });
   });
 
   app.listen(PORT, () => {
     console.log(`agenticpay facilitator listening on http://localhost:${PORT}`);
-    console.log(`endpoints: GET / | GET /supported | POST /verify | POST /settle`);
+    console.log(
+      `endpoints: GET / | GET /supported | POST /verify | POST /settle | GET /discovery/resources`
+    );
     console.log("---");
     console.log(
       "Before serving real settlements, fund the fee payer with SOL on each network."
