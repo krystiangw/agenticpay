@@ -339,13 +339,25 @@ function sanitizeRequirements(r: PaymentRequirements): PaymentRequirements | nul
   if (!scheme || !network || !asset || !payTo || !amount) return null;
   if (!/^\d+$/.test(amount)) return null;
 
+  // Must be positive: the x402 PaymentRequirements schema says so, and the SVM
+  // scheme never reads the field, so a settlement carrying 0 would otherwise
+  // sail through and leave us publishing an entry that schema-validating
+  // discovery clients reject.
   const timeout = r.maxTimeoutSeconds;
   if (
     typeof timeout !== "number" ||
     !Number.isInteger(timeout) ||
-    timeout < 0 ||
+    timeout <= 0 ||
     timeout > MAX_TIMEOUT_SECONDS
   ) {
+    return null;
+  }
+
+  // `extra` carries scheme-critical data — ExactSvmScheme will not settle
+  // without extra.feePayer — so it cannot be emptied to fit a bound; that would
+  // advertise a payment option nobody can actually use. Real ones are tiny, so
+  // an oversized `extra` is anomalous and the whole record is dropped instead.
+  if (!isPlainObject(r.extra) || !withinBytes(r.extra, MAX_EXTRA_BYTES)) {
     return null;
   }
 
@@ -356,10 +368,7 @@ function sanitizeRequirements(r: PaymentRequirements): PaymentRequirements | nul
     amount,
     payTo,
     maxTimeoutSeconds: timeout,
-    extra:
-      isPlainObject(r.extra) && withinBytes(r.extra, MAX_EXTRA_BYTES)
-        ? r.extra
-        : {},
+    extra: r.extra,
   };
 }
 
