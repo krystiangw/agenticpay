@@ -94,6 +94,10 @@ const DISCOVERY_RESOURCES: [string, string][] = (
     return [[origin, payee] as [string, string]];
   });
 
+// Comfortably inside Heroku's 30s SIGTERM-to-SIGKILL window, so a slow drain
+// ends in our own clean exit rather than an R12 and a killed process.
+const SHUTDOWN_TIMEOUT_MS = 25_000;
+
 const SOLANA_DEVNET_CAIP2: Network =
   "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
 const SOLANA_MAINNET_CAIP2: Network =
@@ -371,7 +375,7 @@ async function main() {
     });
   });
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`agenticpay facilitator listening on http://localhost:${PORT}`);
     console.log(
       `endpoints: GET / | GET /supported | POST /verify | POST /settle | GET /discovery/resources`
@@ -383,6 +387,52 @@ async function main() {
     console.log(`  devnet:  https://faucet.solana.com  → ${signer.address}`);
     console.log(`  mainnet: send ~0.01 SOL from any wallet → ${signer.address}`);
   });
+
+  // Heroku sends SIGTERM on every dyno cycle or relocation and SIGKILLs 30s
+  // later. We had no handler at all, and on 2026-07-30 the process failed to
+  // exit in time and was killed (R12). A SIGKILL mid-request is worst for
+  // /settle: the transaction may already be on chain while the payer's
+  // connection dies, so they see a failure for money that actually moved.
+  //
+  // So: stop accepting new work, let in-flight requests finish, flush the
+  // analytics buffer that was previously discarded on every restart, and give
+  // up before Heroku's 30s rather than being killed.
+  let shuttingDown = false;
+  const shutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[shutdown] ${signal} received, draining`);
+
+    // Unref'd so it never holds the process open by itself, but still fires if
+    // the drain stalls.
+    const giveUp = setTimeout(() => {
+      console.warn("[shutdown] drain timed out, exiting anyway");
+      process.exit(0);
+    }, SHUTDOWN_TIMEOUT_MS);
+    giveUp.unref();
+
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+      // server.close() waits on every open socket, and keep-alive connections
+      // sit idle for minutes — the monitor polling /supported holds one. Idle
+      // sockets carry no request worth draining, so drop them; in-flight ones
+      // are untouched.
+      server.closeIdleConnections?.();
+    });
+
+    try {
+      await analytics.shutdown();
+    } catch (err) {
+      console.warn("[shutdown] analytics flush failed:", (err as Error).message);
+    }
+
+    clearTimeout(giveUp);
+    console.log("[shutdown] done");
+    process.exit(0);
+  };
+
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
 }
 
 main().catch((err) => {
