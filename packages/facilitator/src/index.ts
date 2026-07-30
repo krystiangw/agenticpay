@@ -171,6 +171,27 @@ async function main() {
     },
   });
 
+  // Handlers still running, tracked apart from their sockets. A payer whose
+  // connection drops mid-/settle takes their socket with them, so server.close()
+  // would report the server drained while the settlement is still in flight —
+  // and shutdown would then exit in the middle of it. Nothing else in this file
+  // gets to observe "the work is done" for a request whose client has gone.
+  const inFlight = new Set<Promise<void>>();
+  function tracked(
+    handler: (req: express.Request, res: express.Response) => Promise<unknown>
+  ) {
+    return (req: express.Request, res: express.Response) => {
+      // Handlers own their error reporting; swallow here so a rejection cannot
+      // leave the set unsettled or raise an unhandled rejection during drain.
+      const done = handler(req, res).then(
+        () => undefined,
+        () => undefined
+      );
+      inFlight.add(done);
+      void done.finally(() => inFlight.delete(done));
+    };
+  }
+
   app.get("/supported", readLimiter, (_req, res) => {
     res.json(facilitator.getSupported());
   });
@@ -224,7 +245,7 @@ async function main() {
     return null;
   }
 
-  app.post("/verify", writeLimiter, async (req, res) => {
+  app.post("/verify", writeLimiter, tracked(async (req, res) => {
     const { paymentPayload, paymentRequirements } = req.body ?? {};
     const network = paymentRequirements?.network as string | undefined;
     const amount = paymentRequirements?.amount as string | undefined;
@@ -278,9 +299,9 @@ async function main() {
         invalidMessage: GENERIC_VERIFY_ERROR,
       });
     }
-  });
+  }));
 
-  app.post("/settle", writeLimiter, async (req, res) => {
+  app.post("/settle", writeLimiter, tracked(async (req, res) => {
     const { paymentPayload, paymentRequirements } = req.body ?? {};
     const network = paymentRequirements?.network as string | undefined;
     const amount = paymentRequirements?.amount as string | undefined;
@@ -358,7 +379,7 @@ async function main() {
         network: "",
       });
     }
-  });
+  }));
 
   app.get("/", readLimiter, (_req, res) => {
     const supported = facilitator.getSupported();
@@ -419,6 +440,16 @@ async function main() {
       // are untouched.
       server.closeIdleConnections?.();
     });
+
+    // Closing the server is not the same as the work being finished. If a payer
+    // disconnects while /settle is awaiting Solana, their socket goes with them
+    // and server.close() reports a drained server while the settlement is still
+    // running — exiting there would kill it mid-flight, which is the exact
+    // failure this whole handler exists to prevent.
+    if (inFlight.size > 0) {
+      console.log(`[shutdown] awaiting ${inFlight.size} in-flight request(s)`);
+      await Promise.allSettled([...inFlight]);
+    }
 
     try {
       await analytics.shutdown();
