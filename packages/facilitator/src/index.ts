@@ -94,6 +94,10 @@ const DISCOVERY_RESOURCES: [string, string][] = (
     return [[origin, payee] as [string, string]];
   });
 
+// Comfortably inside Heroku's 30s SIGTERM-to-SIGKILL window, so a slow drain
+// ends in our own clean exit rather than an R12 and a killed process.
+const SHUTDOWN_TIMEOUT_MS = 25_000;
+
 const SOLANA_DEVNET_CAIP2: Network =
   "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
 const SOLANA_MAINNET_CAIP2: Network =
@@ -167,6 +171,27 @@ async function main() {
     },
   });
 
+  // Handlers still running, tracked apart from their sockets. A payer whose
+  // connection drops mid-/settle takes their socket with them, so server.close()
+  // would report the server drained while the settlement is still in flight —
+  // and shutdown would then exit in the middle of it. Nothing else in this file
+  // gets to observe "the work is done" for a request whose client has gone.
+  const inFlight = new Set<Promise<void>>();
+  function tracked(
+    handler: (req: express.Request, res: express.Response) => Promise<unknown>
+  ) {
+    return (req: express.Request, res: express.Response) => {
+      // Handlers own their error reporting; swallow here so a rejection cannot
+      // leave the set unsettled or raise an unhandled rejection during drain.
+      const done = handler(req, res).then(
+        () => undefined,
+        () => undefined
+      );
+      inFlight.add(done);
+      void done.finally(() => inFlight.delete(done));
+    };
+  }
+
   app.get("/supported", readLimiter, (_req, res) => {
     res.json(facilitator.getSupported());
   });
@@ -220,7 +245,7 @@ async function main() {
     return null;
   }
 
-  app.post("/verify", writeLimiter, async (req, res) => {
+  app.post("/verify", writeLimiter, tracked(async (req, res) => {
     const { paymentPayload, paymentRequirements } = req.body ?? {};
     const network = paymentRequirements?.network as string | undefined;
     const amount = paymentRequirements?.amount as string | undefined;
@@ -274,9 +299,9 @@ async function main() {
         invalidMessage: GENERIC_VERIFY_ERROR,
       });
     }
-  });
+  }));
 
-  app.post("/settle", writeLimiter, async (req, res) => {
+  app.post("/settle", writeLimiter, tracked(async (req, res) => {
     const { paymentPayload, paymentRequirements } = req.body ?? {};
     const network = paymentRequirements?.network as string | undefined;
     const amount = paymentRequirements?.amount as string | undefined;
@@ -354,7 +379,7 @@ async function main() {
         network: "",
       });
     }
-  });
+  }));
 
   app.get("/", readLimiter, (_req, res) => {
     const supported = facilitator.getSupported();
@@ -371,7 +396,7 @@ async function main() {
     });
   });
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`agenticpay facilitator listening on http://localhost:${PORT}`);
     console.log(
       `endpoints: GET / | GET /supported | POST /verify | POST /settle | GET /discovery/resources`
@@ -383,6 +408,62 @@ async function main() {
     console.log(`  devnet:  https://faucet.solana.com  → ${signer.address}`);
     console.log(`  mainnet: send ~0.01 SOL from any wallet → ${signer.address}`);
   });
+
+  // Heroku sends SIGTERM on every dyno cycle or relocation and SIGKILLs 30s
+  // later. We had no handler at all, and on 2026-07-30 the process failed to
+  // exit in time and was killed (R12). A SIGKILL mid-request is worst for
+  // /settle: the transaction may already be on chain while the payer's
+  // connection dies, so they see a failure for money that actually moved.
+  //
+  // So: stop accepting new work, let in-flight requests finish, flush the
+  // analytics buffer that was previously discarded on every restart, and give
+  // up before Heroku's 30s rather than being killed.
+  let shuttingDown = false;
+  const shutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[shutdown] ${signal} received, draining`);
+
+    // Unref'd so it never holds the process open by itself, but still fires if
+    // the drain stalls.
+    const giveUp = setTimeout(() => {
+      console.warn("[shutdown] drain timed out, exiting anyway");
+      process.exit(0);
+    }, SHUTDOWN_TIMEOUT_MS);
+    giveUp.unref();
+
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+      // server.close() waits on every open socket, and keep-alive connections
+      // sit idle for minutes — the monitor polling /supported holds one. Idle
+      // sockets carry no request worth draining, so drop them; in-flight ones
+      // are untouched.
+      server.closeIdleConnections?.();
+    });
+
+    // Closing the server is not the same as the work being finished. If a payer
+    // disconnects while /settle is awaiting Solana, their socket goes with them
+    // and server.close() reports a drained server while the settlement is still
+    // running — exiting there would kill it mid-flight, which is the exact
+    // failure this whole handler exists to prevent.
+    if (inFlight.size > 0) {
+      console.log(`[shutdown] awaiting ${inFlight.size} in-flight request(s)`);
+      await Promise.allSettled([...inFlight]);
+    }
+
+    try {
+      await analytics.shutdown();
+    } catch (err) {
+      console.warn("[shutdown] analytics flush failed:", (err as Error).message);
+    }
+
+    clearTimeout(giveUp);
+    console.log("[shutdown] done");
+    process.exit(0);
+  };
+
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
 }
 
 main().catch((err) => {
