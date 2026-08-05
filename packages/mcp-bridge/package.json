@@ -45,7 +45,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@solana/kit": "^7.0.0",
     "@x402/core": "^2.20.0",
     "@x402/fetch": "^2.20.0",

@@ -174,8 +174,8 @@ importers:
   packages/mcp-bridge:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.29.0
-        version: 1.29.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
+        specifier: ^1.30.0
+        version: 1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
       '@solana/kit':
         specifier: ^7.0.0
         version: 7.0.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@7.0.2)(utf-8-validate@6.0.6)
@@ -449,8 +449,8 @@ packages:
     peerDependencies:
       '@langchain/core': ^1.0.0
 
-  '@modelcontextprotocol/sdk@1.29.0':
-    resolution: {integrity: sha512-zo37mZA9hJWpULgkRpowewez1y6ML5GsXJPY8FI0tBBCd77HEvza4jDqRKOXgHNn867PVGCyTdzqpz0izu5ZjQ==}
+  '@modelcontextprotocol/sdk@1.30.0':
+    resolution: {integrity: sha512-xKd8OIzlqNzcqcNumGAa6g+PW2kjD5vrpcKOnfldAUPP3j7lnqMPwlTXQm8gF+UwH72z0lqaRbjr9hqGz0eITA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cfworker/json-schema': ^4.1.1
@@ -1581,6 +1581,10 @@ packages:
     resolution: {integrity: sha512-70QWGkr4snxr0OXLRWsFLeRBIRPuQOvt4s8QYjmUlmlkyTZkRqS7EDVRZtzU3TiyDbXSzaOeF0XUKy8PchzukQ==}
     engines: {node: '>=18.0.0'}
 
+  eventsource-parser@3.1.0:
+    resolution: {integrity: sha512-kJezFj9YFAMLeORyi7aCLxLbD5/qWMQnoMVlVPyHIll7lgRJCc3JVln9Vgl9nwQi0YkMnhdGTMNn7CkRRAptMg==}
+    engines: {node: '>=18.0.0'}
+
   eventsource@3.0.7:
     resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
     engines: {node: '>=18.0.0'}
@@ -1590,6 +1594,12 @@ packages:
 
   express-rate-limit@8.6.0:
     resolution: {integrity: sha512-XKJXDsASUOo0LLtFwW5hCcQGH0N4WQc/Rn8/Pvoia+TJFOkkFPvrtW9lZOeeNcxQJspvOIERMwiRLsVFlhHEkA==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      express: '>= 4.11'
+
+  express-rate-limit@8.6.2:
+    resolution: {integrity: sha512-YH4ru+eOJxQABscKFfRCy9R7x9QFGdezclVMwwgFFndzS2Xnm0uo6B0ABZsLhcpeptGv2qvuJVWlQr9gQZoC3A==}
     engines: {node: '>= 16'}
     peerDependencies:
       express: '>= 4.11'
@@ -1713,6 +1723,10 @@ packages:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
 
+  iconv-lite@0.7.3:
+    resolution: {integrity: sha512-IKXpvIzjnC9XTAUbVBcMfGS0EPaIXtW6v+zr+RRp+hqULEpo0owZax6wyRwPOJbWbzjYspQwusTsfVr0ifh4uQ==}
+    engines: {node: '>=0.10.0'}
+
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
 
@@ -1765,8 +1779,8 @@ packages:
   jose@5.10.0:
     resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
-  jose@6.2.3:
-    resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
+  jose@6.2.8:
+    resolution: {integrity: sha512-Bsdjwm3Qsd/P0jR+BHDe3LytDfY7WBq2HmCCLIwuVRHMuEC9ae7/R474GIUdF1NgCyZjzVo/A9DOiOBtXq8ZoQ==}
 
   js-tiktoken@1.0.21:
     resolution: {integrity: sha512-biOj/6M5qdgx5TKjDnFT1ymSpM5tbd3ylwDtrQvFQSu0Z7bBYko2dF+W/aUkXUPuk6IVpRxk/3Q2sHOzGlS36g==}
@@ -2421,7 +2435,7 @@ snapshots:
       '@langchain/core': 1.1.42(@opentelemetry/api@1.9.0)(ws@8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       js-tiktoken: 1.0.21
 
-  '@modelcontextprotocol/sdk@1.29.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)':
+  '@modelcontextprotocol/sdk@1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)':
     dependencies:
       '@hono/node-server': 2.0.11(hono@4.13.0)
       ajv: 8.20.0
@@ -2430,11 +2444,11 @@ snapshots:
       cors: 2.8.6
       cross-spawn: 7.0.6
       eventsource: 3.0.7
-      eventsource-parser: 3.0.8
+      eventsource-parser: 3.1.0
       express: 5.2.1
-      express-rate-limit: 8.6.0(express@5.2.1)
+      express-rate-limit: 8.6.2(express@5.2.1)
       hono: 4.13.0
-      jose: 6.2.3
+      jose: 6.2.8
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
@@ -3715,9 +3729,11 @@ snapshots:
 
   eventsource-parser@3.0.8: {}
 
+  eventsource-parser@3.1.0: {}
+
   eventsource@3.0.7:
     dependencies:
-      eventsource-parser: 3.0.8
+      eventsource-parser: 3.1.0
 
   evp_bytestokey@1.0.3:
     dependencies:
@@ -3725,6 +3741,14 @@ snapshots:
       safe-buffer: 5.2.1
 
   express-rate-limit@8.6.0(express@5.2.1):
+    dependencies:
+      debug: 4.4.3
+      express: 5.2.1
+      ip-address: 10.4.0
+    transitivePeerDependencies:
+      - supports-color
+
+  express-rate-limit@8.6.2(express@5.2.1):
     dependencies:
       debug: 4.4.3
       express: 5.2.1
@@ -3895,6 +3919,10 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
+  iconv-lite@0.7.3:
+    dependencies:
+      safer-buffer: 2.1.2
+
   ieee754@1.2.1: {}
 
   inherits@2.0.4: {}
@@ -3945,7 +3973,7 @@ snapshots:
 
   jose@5.10.0: {}
 
-  jose@6.2.3: {}
+  jose@6.2.8: {}
 
   js-tiktoken@1.0.21:
     dependencies:
@@ -4139,7 +4167,7 @@ snapshots:
     dependencies:
       bytes: 3.1.2
       http-errors: 2.0.1
-      iconv-lite: 0.7.2
+      iconv-lite: 0.7.3
       unpipe: 1.0.0
 
   readable-stream@2.3.8:
