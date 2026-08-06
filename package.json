@@ -9,7 +9,8 @@
     "typecheck": "pnpm -r typecheck",
     "clean": "pnpm -r exec rm -rf dist .turbo node_modules && rm -rf node_modules",
     "heroku-postbuild": "pnpm -r build",
-    "start": "node packages/facilitator/dist/index.js"
+    "start": "node packages/facilitator/dist/index.js",
+    "test": "pnpm -r test"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {

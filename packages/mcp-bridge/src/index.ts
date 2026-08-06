@@ -87,6 +87,71 @@ export interface BridgeConfig {
   sessionBudget?: string;
 }
 
+/** The subset of a payment requirement the caps care about. */
+interface CappedRequirement {
+  amount: string;
+}
+
+/**
+ * Enforcement for `maxPaymentPerCall` / `sessionBudget`, kept out of
+ * createBridge so the money-guarding logic can be exercised on its own.
+ *
+ * Returns null when neither cap is configured, which is the caller's signal to
+ * register nothing and leave spending unrestricted.
+ */
+export function createSpendCapEnforcer(caps: {
+  maxPaymentPerCall?: string | undefined;
+  sessionBudget?: string | undefined;
+}): {
+  policy: <T extends CappedRequirement>(requirements: T[]) => T[];
+  beforePaymentCreation: (context: {
+    selectedRequirements: CappedRequirement;
+  }) => Promise<{ abort: true; reason: string } | undefined>;
+  hasSessionBudget: boolean;
+  spent: () => bigint;
+} | null {
+  const perCallCap =
+    caps.maxPaymentPerCall !== undefined ? BigInt(caps.maxPaymentPerCall) : undefined;
+  const sessionBudget =
+    caps.sessionBudget !== undefined ? BigInt(caps.sessionBudget) : undefined;
+  if (perCallCap === undefined && sessionBudget === undefined) return null;
+
+  let sessionSpent = 0n;
+
+  return {
+    // Filtering a requirement out means the client has no acceptable way to
+    // pay, so the wrapped fetch rejects and the tool call surfaces an error
+    // instead of silently overspending.
+    policy: <T extends CappedRequirement>(requirements: T[]): T[] =>
+      requirements.filter((req) => {
+        const amount = BigInt(req.amount);
+        if (perCallCap !== undefined && amount > perCallCap) return false;
+        if (sessionBudget !== undefined && sessionSpent + amount > sessionBudget) return false;
+        return true;
+      }),
+
+    // Reserve the budget synchronously before signing. The policy filter above
+    // is only advisory: concurrent tool calls could all pass it before any
+    // payment finishes, so this check-and-reserve (atomic — no await between
+    // the check and the update) is the actual enforcement.
+    beforePaymentCreation: async (context) => {
+      if (sessionBudget === undefined) return undefined;
+      const amount = BigInt(context.selectedRequirements.amount);
+      if (sessionSpent + amount > sessionBudget) {
+        return {
+          abort: true as const,
+          reason: `session budget exceeded: spent ${sessionSpent} + ${amount} > ${sessionBudget} base units`,
+        };
+      }
+      sessionSpent += amount;
+      return undefined;
+    },
+
+    hasSessionBudget: sessionBudget !== undefined,
+    spent: () => sessionSpent,
+  };
+}
+
 /**
  * Build the MCP server, register every paid tool, and connect over stdio.
  * Returns once the transport closes (the parent MCP client exits).
@@ -101,43 +166,11 @@ export async function createBridge(config: BridgeConfig): Promise<void> {
     new ExactSvmScheme(signer, { rpcUrl: config.rpcUrl })
   );
 
-  const perCallCap =
-    config.maxPaymentPerCall !== undefined
-      ? BigInt(config.maxPaymentPerCall)
-      : undefined;
-  const sessionBudget =
-    config.sessionBudget !== undefined
-      ? BigInt(config.sessionBudget)
-      : undefined;
-  let sessionSpent = 0n;
-  if (perCallCap !== undefined || sessionBudget !== undefined) {
-    // Filtering a requirement out means the client has no acceptable way to
-    // pay, so the wrapped fetch rejects and the tool call surfaces an error
-    // instead of silently overspending.
-    x402.registerPolicy((_x402Version, requirements) =>
-      requirements.filter((req) => {
-        const amount = BigInt(req.amount);
-        if (perCallCap !== undefined && amount > perCallCap) return false;
-        if (sessionBudget !== undefined && sessionSpent + amount > sessionBudget)
-          return false;
-        return true;
-      })
-    );
-    if (sessionBudget !== undefined) {
-      // Reserve the budget synchronously before signing. The policy filter
-      // above is only advisory: concurrent tool calls could all pass it
-      // before any payment finishes, so the check-and-reserve here (atomic —
-      // no await between check and update) is the actual enforcement.
-      x402.onBeforePaymentCreation(async (context) => {
-        const amount = BigInt(context.selectedRequirements.amount);
-        if (sessionSpent + amount > sessionBudget) {
-          return {
-            abort: true as const,
-            reason: `session budget exceeded: spent ${sessionSpent} + ${amount} > ${sessionBudget} base units`,
-          };
-        }
-        sessionSpent += amount;
-      });
+  const caps = createSpendCapEnforcer(config);
+  if (caps) {
+    x402.registerPolicy((_x402Version, requirements) => caps.policy(requirements));
+    if (caps.hasSessionBudget) {
+      x402.onBeforePaymentCreation(caps.beforePaymentCreation);
     }
   }
 

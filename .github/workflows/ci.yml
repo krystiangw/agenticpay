@@ -34,3 +34,7 @@ jobs:
 
       - name: Typecheck
         run: pnpm -r typecheck
+
+      # After the build: the shutdown tests spawn the facilitator from dist/.
+      - name: Test
+        run: pnpm -r test
