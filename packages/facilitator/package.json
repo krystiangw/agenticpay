@@ -32,7 +32,9 @@
     "dev": "tsx --env-file=../../.env src/index.ts",
     "start": "node --env-file=../../.env dist/index.js",
     "fund": "tsx --env-file=../../.env src/fund.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json",
+    "test": "tsx --test test/*.test.ts",
+    "pretest": "pnpm build"
   },
   "dependencies": {
     "@agenticpay/sdk": "workspace:*",

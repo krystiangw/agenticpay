@@ -1,0 +1,11 @@
+{
+  // Type-checks the tests without emitting them: `tsx --test` strips types
+  // rather than checking them, so without this the test files would compile
+  // to nothing and any type error in them would go unnoticed.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "test/**/*"]
+}
