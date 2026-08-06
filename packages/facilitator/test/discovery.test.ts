@@ -546,9 +546,15 @@ describe("the index is bounded", () => {
     const c = openCatalog();
     for (let i = 0; i < 1200; i++) c.record(payload({ url: `https://spam.example/${i}` }), reqs());
     assert.equal(c.size, 1000);
-    const listed = c.query({ limit: "100" }).items.map((i) => i.resource);
-    assert.ok(listed.includes("https://spam.example/1199"), "newest kept");
-    assert.ok(!listed.includes("https://spam.example/0"), "oldest evicted");
+    // Assert the exact surviving window. Checking that one page does *not*
+    // contain the oldest entry proves nothing: listing is newest-first, so an
+    // un-evicted entry 0 would sit past the page anyway.
+    assert.equal(c.query({ limit: "1" }).items[0]?.resource, "https://spam.example/1199", "newest kept");
+    assert.equal(
+      c.query({ limit: "1", offset: "999" }).items[0]?.resource,
+      "https://spam.example/200",
+      "the 200 oldest were evicted, leaving exactly 200..1199"
+    );
   });
 
   test("ordering is newest-first and survives same-millisecond writes", () => {
