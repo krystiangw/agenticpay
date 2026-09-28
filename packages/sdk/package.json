@@ -46,6 +46,6 @@
     "bs58": "^6.0.0"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1"
+    "@types/node": "^26.6.2"
   }
 }

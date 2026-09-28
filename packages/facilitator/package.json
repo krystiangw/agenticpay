@@ -51,6 +51,6 @@
     "@solana-program/compute-budget": "^0.18.1",
     "@solana-program/token": "^0.16.1",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.5.1"
+    "@types/node": "^26.6.2"
   }
 }
