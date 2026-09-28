@@ -35,9 +35,9 @@
   },
   "dependencies": {
     "@agenticpay/sdk": "workspace:*",
-    "@x402/core": "^2.26.0",
-    "@x402/express": "^2.26.0",
-    "@x402/svm": "^2.26.0",
+    "@x402/core": "^2.27.0",
+    "@x402/express": "^2.27.0",
+    "@x402/svm": "^2.27.0",
     "express": "^5.2.1"
   },
   "devDependencies": {
