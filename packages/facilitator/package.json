@@ -40,9 +40,9 @@
     "@agenticpay/sdk": "workspace:*",
     "@solana/kit": "^8.3.0",
     "@solana/web3.js": "^1.99.0",
-    "@x402/core": "^2.26.0",
-    "@x402/extensions": "^2.26.0",
-    "@x402/svm": "^2.26.0",
+    "@x402/core": "^2.27.0",
+    "@x402/extensions": "^2.27.0",
+    "@x402/svm": "^2.27.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "posthog-node": "^5.52.4"
