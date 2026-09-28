@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@agenticpay/sdk": "workspace:*",
-    "@anthropic-ai/sdk": "^0.127.0",
+    "@anthropic-ai/sdk": "^0.128.0",
     "@solana/kit": "^8.3.0",
     "@x402/core": "^2.26.0",
     "@x402/fetch": "^2.26.0",
