@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@agenticpay/sdk": "workspace:*",
-    "@solana/kit": "^8.3.0",
+    "@solana/kit": "^8.4.0",
     "@solana/web3.js": "^1.99.0",
     "@x402/core": "^2.26.0",
     "@x402/extensions": "^2.26.0",
@@ -48,8 +48,8 @@
     "posthog-node": "^5.52.4"
   },
   "devDependencies": {
-    "@solana-program/compute-budget": "^0.18.1",
-    "@solana-program/token": "^0.16.1",
+    "@solana-program/compute-budget": "^0.19.0",
+    "@solana-program/token": "^0.17.0",
     "@types/express": "^5.0.6",
     "@types/node": "^26.5.1"
   }
